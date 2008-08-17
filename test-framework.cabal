@@ -1,0 +1,78 @@
+Name:           test-framework
+Version:        0.1
+Cabal-Version:  >= 1.2
+Category:       Testing
+Synopsis:       Framework for running and organising QuickCheck test properties
+Description:    Allows QuickCheck properties to be assembled into test groups, run in parallel or selectively
+                and more...
+License:        BSD3
+License-File:   LICENSE
+Author:         Max Bolingbroke
+Maintainer:     batterseapower@hotmail.com
+Homepage:       http://bsp.lighthouseapp.com/projects/15661-hs-test-framework/overview
+Build-Type:     Simple
+
+Flag SplitBase
+        Description:    Choose the new smaller, split-up base package
+        Default:        True
+
+Flag Example
+        Description:    Build the example testsuite
+        Default:        False
+
+
+Library
+        Exposed-Modules:        Test.Framework
+                                Test.Framework.Core
+                                Test.Framework.Options
+                                Test.Framework.Runners.Console
+                                Test.Framework.Runners.Options
+                                Test.Framework.Seed
+        
+        Other-Modules:          Test.Framework.Processors
+                                Test.Framework.QuickCheck
+                                Test.Framework.Utilities
+                                Test.Framework.Runners.Core
+                                Test.Framework.ThreadPool
+                                Test.Framework.Utilities
+        
+        Build-Depends:          QuickCheck >= 1.1
+        if flag(splitBase)
+                Build-Depends:  base >= 3, random >= 1.0
+        else
+                Build-Depends:  base < 3
+        
+        Extensions:             CPP
+                                PatternGuards
+                                ExistentialQuantification
+                                RecursiveDo
+                                FlexibleInstances
+        
+        Ghc-Options:            -Wall
+        
+        if impl(ghc)
+                Cpp-Options:    -DCOMPILER_GHC
+
+Executable test-framework-example
+        Main-Is:                Test/Framework/Example.lhs
+
+        Build-Depends:          QuickCheck >= 1.1
+        if flag(splitBase)
+                Build-Depends:  base >= 3, random >= 1.0
+        else
+                Build-Depends:  base < 3
+        
+        Extensions:             CPP
+                                PatternGuards
+                                ExistentialQuantification
+                                RecursiveDo
+                                FlexibleInstances
+        
+        Ghc-Options:            -threaded
+        
+        if impl(ghc)
+                Cpp-Options:    -DCOMPILER_GHC
+        
+        if !flag(example)
+                Buildable:      False
+        
