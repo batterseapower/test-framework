@@ -1,7 +1,7 @@
 == RUNNING ==
 
 ghc -package test-framework -threaded ListProperties.lhs -o ListProperties
-./ListProperties
+./ListProperties +RTS -N2
 
 
 == ATTRIBUTION ==

@@ -38,7 +38,7 @@ Library
         
         Build-Depends:          QuickCheck >= 1.1
         if flag(splitBase)
-                Build-Depends:  base >= 3, random >= 1.0
+                Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
                 Build-Depends:  base < 3
         
@@ -58,7 +58,7 @@ Executable test-framework-example
 
         Build-Depends:          QuickCheck >= 1.1
         if flag(splitBase)
-                Build-Depends:  base >= 3, random >= 1.0
+                Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
                 Build-Depends:  base < 3
         
