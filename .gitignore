@@ -3,3 +3,7 @@
 
 # Cabal temporary locations
 dist/
+
+# Build output
+*.hi
+*.o
