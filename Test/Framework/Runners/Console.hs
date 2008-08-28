@@ -89,7 +89,7 @@ completeQuickCheckOptions qco = QuickCheckOptions {
 
 showRunTest :: Int -> RunTest -> IO Bool
 showRunTest indent_level (RunProperty name result) = do
-    putStrIndented indent_level (name ++ ": " ++ show result)
+    putStrLnIndented indent_level (name ++ ": " ++ show result)
     return (propertySucceeded result)
 showRunTest indent_level (RunTestGroup name tests) = do
     putStrLnIndented indent_level (name ++ ":")
