@@ -16,6 +16,10 @@ Flag SplitBase
         Description:    Choose the new smaller, split-up base package
         Default:        True
 
+Flag Tests
+        Description:    Build the tests
+        Default:        False
+
 Flag Example
         Description:    Build the example testsuite
         Default:        False
@@ -52,6 +56,29 @@ Library
         
         if impl(ghc)
                 Cpp-Options:    -DCOMPILER_GHC
+
+Executable test-framework-tests
+        Main-Is:                Test/Framework/Tests.hs
+
+        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2
+        if flag(splitBase)
+                Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
+        else
+                Build-Depends:  base < 3
+        
+        Extensions:             CPP
+                                PatternGuards
+                                ExistentialQuantification
+                                RecursiveDo
+                                FlexibleInstances
+        
+        Ghc-Options:            -Wall -threaded
+        
+        if impl(ghc)
+                Cpp-Options:    -DCOMPILER_GHC
+        
+        if !flag(tests)
+                Buildable:      False
 
 Executable test-framework-example
         Main-Is:                Test/Framework/Example.lhs

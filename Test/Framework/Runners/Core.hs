@@ -43,9 +43,9 @@ runTest' (TestGroup name tests) results = (RunTestGroup name run_tests, results'
 runTest' _ _ = error "runTest': incoming results did not match outgoing ones"
 
 runTests' :: [Test] -> [TestResult] -> ([RunTest], [TestResult], [PendingTest])
-runTests' initial_tests initial_results = (reverse final_run_tests, final_results, final_requested_runs)
+runTests' initial_tests initial_results = (final_run_tests, final_results, final_requested_runs)
   where
     (final_run_tests, final_results, final_requested_runs) = foldl' go ([], initial_results, []) initial_tests
     
-    go (run_tests, results, requested_runs) test = (run_test : run_tests, results', requested_runs ++ requested_runs')
+    go (run_tests, results, requested_runs) test = (run_tests ++ [run_test], results', requested_runs ++ requested_runs')
       where (run_test, results', requested_runs') = runTest' test results

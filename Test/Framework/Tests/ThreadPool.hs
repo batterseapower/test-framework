@@ -1,0 +1,47 @@
+module Test.Framework.Tests.ThreadPool (tests) where
+
+import Test.Framework.ThreadPool
+
+import Test.HUnit
+
+import System.Random
+
+import Control.Concurrent
+import Control.Exception
+import Control.Monad
+
+import Prelude hiding (catch)
+
+
+expectBroken :: Assertion -> Assertion
+expectBroken assertion = do
+    did_succeed <- catch (assertion >> return True) (const $ return False)
+    when did_succeed $ assertFailure "Test unexpectedly succeeded"
+
+tests :: [Test]
+tests = [TestLabel "ThreadPool.executeOnPool preserves order"                         (TestCase test_execute_preserves_order),
+         TestLabel "ThreadPool.executeOnPool preserves order even with delays"        (TestCase test_execute_preserves_order_even_with_delay),
+         TestLabel "ThreadPool.executeOnPool input list can depend on previous items" (TestCase test_execute_schedules_lazily)]
+
+test_execute_preserves_order :: Assertion
+test_execute_preserves_order = do
+    let input = [1..1000] :: [Int]
+    output <- executeOnPool 4 $ map return input
+    input @=? output
+
+test_execute_preserves_order_even_with_delay :: Assertion
+test_execute_preserves_order_even_with_delay = do
+    gen <- getStdGen
+    let -- Execute 100 actions with a random delay of up to 50ms each
+        input = [1..100] :: [Int]
+        actions = zipWith (\n delay -> threadDelay delay >> return n) input (randomRs (0, 50000) gen)
+    output <- executeOnPool 4 actions
+    input @=? output
+
+-- This /should/ work, but doesn't.  I can't quite work out why: it appears to me that even though we
+-- add things to the internal thread-pool channel on another thread the channel demands that everything
+-- is added before it peels off the first action to be executed.
+test_execute_schedules_lazily :: Assertion
+test_execute_schedules_lazily = mdo
+    ~(first_output:rest) <- executeOnPool 4 $ return 10 : (return 20) : replicate first_output (return 99) :: IO [Int]
+    [10, 20] ++ (replicate 10 99) @=? (first_output:rest)
