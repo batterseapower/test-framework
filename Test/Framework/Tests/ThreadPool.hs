@@ -38,9 +38,6 @@ test_execute_preserves_order_even_with_delay = do
     output <- executeOnPool 4 actions
     input @=? output
 
--- This /should/ work, but doesn't.  I can't quite work out why: it appears to me that even though we
--- add things to the internal thread-pool channel on another thread the channel demands that everything
--- is added before it peels off the first action to be executed.
 test_execute_schedules_lazily :: Assertion
 test_execute_schedules_lazily = mdo
     ~(first_output:rest) <- executeOnPool 4 $ return 10 : (return 20) : replicate first_output (return 99) :: IO [Int]
