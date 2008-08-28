@@ -27,7 +27,7 @@ data PropertyResult = PropertyOK Int                   -- ^ The property is true
 instance Show PropertyResult where
     show (PropertyOK ntest)                     = "OK, passed " ++ show ntest ++ " tests"
     show (PropertyArgumentsExhausted ntest)     = "Arguments exhausted after " ++ show ntest ++ " tests"
-    show (PropertyFalsifiable ntests test_args) = "Falsifiable, after " ++ show ntests ++ " tests:\n" ++ unlines test_args
+    show (PropertyFalsifiable ntests test_args) = "Falsifiable, after " ++ show ntests ++ " tests:\n" ++ unlinesConcise test_args
 
 propertySucceeded :: PropertyResult -> Bool
 propertySucceeded (PropertyOK _)                 = True

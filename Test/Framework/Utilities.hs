@@ -27,3 +27,21 @@ onLeft f (x, y) = (f x, y)
 
 onRight :: (b -> c) -> (a, b) -> (a, c)
 onRight f (x, y) = (x, f y)
+
+-- | Like 'unlines', but does not append a trailing newline if there
+-- is at least one line.  For example:
+--
+-- > unlinesConcise ["A", "B"] == "A\nB"
+-- > unlinesConcise [] == ""
+--
+-- Whereas:
+--
+-- > unlines ["A", "B"] == "A\nB\n"
+-- > unlines [] == ""
+--
+-- This is closer to the behaviour of 'unwords', which does not append
+-- a trailing space.
+unlinesConcise :: [String] -> String
+unlinesConcise []     = []
+unlinesConcise [l]    = l
+unlinesConcise (l:ls) = l ++ '\n' : unlinesConcise ls
