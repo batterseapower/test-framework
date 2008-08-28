@@ -27,8 +27,14 @@ optionsDescription = [
             (ReqArg (\t -> mempty { ropt_threads = Just (read t) }) "NUMBER")
             "number of threads to use to run tests",
         Option [] ["test-seed"]
-            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_seed = Just (read t) }) }) "NUMBER|random")
-            "seed for random number generator used for each test"
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_seed = Just (read t) }) }) ("NUMBER|" ++ show RandomSeed))
+            "default seed for test random number generator",
+        Option ['t'] ["qc-maximum-tests"]
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_quickcheck_options = Just (mempty { qcopt_maximum_tests = Just (read t) }) }) }) "NUMBER")
+            "how many tests QuickCheck should try, by default",
+        Option [] ["qc-maximum-failures"]
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_quickcheck_options = Just (mempty { qcopt_maximum_failures = Just (read t) }) }) }) "NUMBER")
+            "how many unsuitable candidate bits of test data QuickCheck will endure before giving up, by default"
     ]
 
 interpretArgs :: [String] -> IO (RunnerOptions, [String])
