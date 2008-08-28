@@ -61,7 +61,8 @@ tests = [
             ],
         TestGroup "Sorting Group 2" [
                 Property "sort4" prop_sort4,
-                Property "sort5" prop_sort5
+                Property "sort5" prop_sort5,
+                Property "sort6" prop_sort6
             ]
     ]
 
