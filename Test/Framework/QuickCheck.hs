@@ -38,25 +38,25 @@ propertySucceeded _                              = False
 runProperty :: Testable a => CompleteTestOptions -> a -> IO PropertyResult
 runProperty topts testable = do
     gen <- newSeededStdGen (unK $ topt_seed topts)
-    myCheck (unK $ topt_quickcheck_config topts) gen testable
+    myCheck (unK $ topt_quickcheck_options topts) gen testable
 
 -- The following somewhat ripped out of the QuickCheck source code so that
 -- I can customise the random number generator used to do the checking etc
-myCheck :: (Testable a) => Config -> StdGen -> a -> IO PropertyResult
-myCheck config rnd a = myTests config (evaluate a) rnd 0 0 []
+myCheck :: (Testable a) => CompleteQuickCheckOptions -> StdGen -> a -> IO PropertyResult
+myCheck qcoptions rnd a = myTests qcoptions (evaluate a) rnd 0 0 []
 
-myTests :: Config -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> IO PropertyResult
-myTests config gen rnd0 ntest nfail stamps
-  | ntest == configMaxTest config = do return (PropertyOK ntest)
-  | nfail == configMaxFail config = do return (PropertyArgumentsExhausted ntest)
+myTests :: CompleteQuickCheckOptions -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> IO PropertyResult
+myTests qcoptions gen rnd0 ntest nfail stamps
+  | ntest == unK (qcopt_maximum_tests qcoptions)    = do return (PropertyOK ntest)
+  | nfail == unK (qcopt_maximum_failures qcoptions) = do return (PropertyArgumentsExhausted ntest)
   | otherwise               =
       do case ok result of
            Nothing    ->
-             myTests config gen rnd1 ntest (nfail + 1) stamps
+             myTests qcoptions gen rnd1 ntest (nfail + 1) stamps
            Just True  ->
-             myTests config gen rnd1 (ntest + 1) nfail (stamp result:stamps)
+             myTests qcoptions gen rnd1 (ntest + 1) nfail (stamp result:stamps)
            Just False -> do
              return $ PropertyFalsifiable ntest (arguments result)
   where
-    result      = generate (configSize config ntest) rnd2 gen
+    result       = generate (configSize defaultConfig ntest) rnd2 gen
     (rnd1, rnd2) = split rnd0

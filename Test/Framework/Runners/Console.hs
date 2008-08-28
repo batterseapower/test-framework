@@ -77,7 +77,13 @@ completeRunnerOptions ro = RunnerOptions {
 completeTestOptions :: TestOptions -> CompleteTestOptions
 completeTestOptions to = TestOptions {
             topt_seed = K $ topt_seed to `orElse` RandomSeed,
-            topt_quickcheck_config = K $ topt_quickcheck_config to `orElse` QC.defaultConfig
+            topt_quickcheck_options = K $ completeQuickCheckOptions (topt_quickcheck_options to `orElse` mempty)
+        }
+
+completeQuickCheckOptions :: QuickCheckOptions -> CompleteQuickCheckOptions
+completeQuickCheckOptions qco = QuickCheckOptions {
+            qcopt_maximum_tests = K $ qcopt_maximum_tests qco `orElse` QC.configMaxTest QC.defaultConfig,
+            qcopt_maximum_failures = K $ qcopt_maximum_failures qco `orElse` QC.configMaxFail QC.defaultConfig
         }
 
 
