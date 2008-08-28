@@ -3,8 +3,6 @@ module Test.Framework.Options where
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
-import qualified Test.QuickCheck as QC
-
 import Data.Monoid
 
 
