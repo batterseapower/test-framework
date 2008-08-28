@@ -1,7 +1,7 @@
 == RUNNING ==
 
 ghc -package test-framework -threaded Example.lhs -o Example
-./Example +RTS -N2
+./Example --qc-maximum-tests=5000 +RTS -N2
 
 
 == ATTRIBUTION ==
