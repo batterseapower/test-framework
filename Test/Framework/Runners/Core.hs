@@ -37,7 +37,7 @@ runTests threads topts tests = mdo
     return run_tests
 
 runTest' :: Test -> [TestResult] -> (RunTest, [TestResult], [PendingTest])
-runTest' (Property name testable) (result:rest) = (RunProperty name result, rest, [flip runProperty testable])
+runTest' (Property name testable) ~(result:rest) = (RunProperty name result, rest, [flip runProperty testable])
 runTest' (TestGroup name tests) results = (RunTestGroup name run_tests, results', requested_runs)
   where (run_tests, results', requested_runs) = runTests' tests results
 runTest' _ _ = error "runTest': incoming results did not match outgoing ones"
