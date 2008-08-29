@@ -1,0 +1,10 @@
+=== High Priority ===
+Allow control over which tests to run on the command line
+Progress reporting both within a single test and overall
+
+=== Medium Priority ===
+Let people add their own TestOptions structures into their Test configuration
+HUnit integration
+
+=== Low Priority ===
+Colorisation of console output to show success / failure
