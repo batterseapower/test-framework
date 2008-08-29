@@ -20,6 +20,13 @@ instance Read Seed where
                         else map (FixedSeed `onLeft`) (readsPrec prec xs)
       where (random_prefix, rest) = splitAt 6 xs
 
-newSeededStdGen :: Seed -> IO StdGen
-newSeededStdGen (FixedSeed seed) = return $ mkStdGen seed
-newSeededStdGen RandomSeed = newStdGen
+-- | Given a 'Seed', returns a new random number generator based on that seed and the
+-- actual numeric seed that was used to build that generator, so it can be recreated.
+newSeededStdGen :: Seed -> IO (StdGen, Int)
+newSeededStdGen (FixedSeed seed) = return $ (mkStdGen seed, seed)
+newSeededStdGen RandomSeed = newStdGenWithKnownSeed
+
+newStdGenWithKnownSeed :: IO (StdGen, Int)
+newStdGenWithKnownSeed = do
+    seed <- randomIO
+    return (mkStdGen seed, seed)
