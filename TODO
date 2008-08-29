@@ -1,6 +1,6 @@
 === High Priority ===
 Allow control over which tests to run on the command line
-Progress reporting both within a single test and overall
+Overall progress reporting
 
 === Medium Priority ===
 Let people add their own TestOptions structures into their Test configuration
