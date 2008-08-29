@@ -37,14 +37,14 @@ optionsDescription = [
             "how many unsuitable candidate bits of test data QuickCheck will endure before giving up, by default"
     ]
 
-interpretArgs :: [String] -> IO (RunnerOptions, [String])
+interpretArgs :: [String] -> IO (Either String (RunnerOptions, [String]))
 interpretArgs args = do
     prog_name <- getProgName
     let usage_header = "Usage: " ++ prog_name ++ " [OPTIONS]"
     
     case getOpt Permute optionsDescription args of
-        (o, n, [])   -> return (mconcat o, n)
-        (_, _, errs) -> ioError (userError (concat errs ++ usageInfo usage_header optionsDescription))
+        (o, n, [])   -> return $ Right (mconcat o, n)
+        (_, _, errs) -> return $ Left (concat errs ++ usageInfo usage_header optionsDescription)
 
 
 defaultMain :: [Test] -> IO ()
@@ -54,11 +54,11 @@ defaultMain tests = do
 
 defaultMainWithArgs :: [Test] -> [String] -> IO ()
 defaultMainWithArgs tests args = do
-    (ropts, leftovers) <- interpretArgs args
-    
-    if null leftovers
-     then defaultMainWithOpts tests ropts
-     else ioError (userError ("Could not understand these extra arguments: " ++ unwords leftovers))
+    interpreted_args <- interpretArgs args
+    case interpreted_args of
+        Right (ropts, [])    -> defaultMainWithOpts tests ropts
+        Right (_, leftovers) -> putStrLn $ "Could not understand these extra arguments: " ++ unwords leftovers
+        Left error_message   -> putStrLn error_message
 
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
 defaultMainWithOpts tests ropts = do
