@@ -7,6 +7,9 @@ import Data.Monoid
 data K a = K { unK :: a }
 
 
+eraseStr :: Int -> IO ()
+eraseStr num = putStr (replicate num '\b')
+
 putStrIndented :: Int -> String -> IO ()
 putStrIndented how_much = putStr . indent how_much
 

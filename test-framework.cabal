@@ -51,6 +51,7 @@ Library
                                 ExistentialQuantification
                                 RecursiveDo
                                 FlexibleInstances
+                                TypeOperators
         
         Ghc-Options:            -Wall
         
@@ -71,6 +72,7 @@ Executable test-framework-tests
                                 ExistentialQuantification
                                 RecursiveDo
                                 FlexibleInstances
+                                TypeOperators
         
         Ghc-Options:            -Wall -threaded
         
@@ -94,6 +96,7 @@ Executable test-framework-example
                                 ExistentialQuantification
                                 RecursiveDo
                                 FlexibleInstances
+                                TypeOperators
         
         Ghc-Options:            -threaded
         

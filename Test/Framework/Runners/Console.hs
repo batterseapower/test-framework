@@ -3,6 +3,7 @@ module Test.Framework.Runners.Console (
     ) where
 
 import Test.Framework.Core
+import Test.Framework.Improving
 import Test.Framework.Options
 import Test.Framework.Processors
 import Test.Framework.QuickCheck
@@ -94,8 +95,9 @@ completeQuickCheckOptions qco = QuickCheckOptions {
 
 
 showRunTest :: Int -> RunTest -> IO Bool
-showRunTest indent_level (RunProperty name result) = do
-    putStrLnIndented indent_level (name ++ ": " ++ show result)
+showRunTest indent_level (RunProperty name improving_result) = do
+    putStrIndented indent_level (name ++ ": ")
+    result <- showImprovingPropertyResult 0 improving_result
     return (propertySucceeded result)
 showRunTest indent_level (RunTestGroup name tests) = do
     putStrLnIndented indent_level (name ++ ":")
@@ -103,3 +105,15 @@ showRunTest indent_level (RunTestGroup name tests) = do
 
 showRunTests :: Int -> [RunTest] -> IO Bool
 showRunTests indent_level = fmap and . mapM (showRunTest indent_level)
+
+showImprovingPropertyResult :: Int -> (TestCount :~> PropertyResult) -> IO PropertyResult
+showImprovingPropertyResult erase_amount (Finished result) = do
+    eraseStr erase_amount
+    putStrLn (show result)
+    return result
+showImprovingPropertyResult erase_amount (Improving tests rest) = do
+    eraseStr erase_amount
+    putStr tests_str
+    showImprovingPropertyResult (length tests_str) rest
+  where  
+    tests_str = show tests
