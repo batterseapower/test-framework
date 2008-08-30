@@ -46,8 +46,7 @@ propertyStatusIsSuccess _                          = False
 runProperty :: Testable a => CompleteTestOptions -> a -> IO (TestCount :~> PropertyResult, IO ())
 runProperty topts testable = do
     (gen, seed) <- newSeededStdGen (unK $ topt_seed topts)
-    (status_and_count, action) <- runImprovingIO $ myCheck (unK $ topt_quickcheck_options topts) gen testable
-    return (fmap (toPropertyResult seed) status_and_count, action)
+    runImprovingIO $ fmap (toPropertyResult seed) $ myCheck (unK $ topt_quickcheck_options topts) gen testable
   where
     toPropertyResult seed (status, tests_run) = PropertyResult {
             pr_status = status,
@@ -55,10 +54,10 @@ runProperty topts testable = do
             pr_tests_run = tests_run
         }
 
-myCheck :: (Testable a) => CompleteQuickCheckOptions -> StdGen -> a -> ImprovingIO TestCount (PropertyStatus, TestCount) (PropertyStatus, TestCount)
+myCheck :: (Testable a) => CompleteQuickCheckOptions -> StdGen -> a -> ImprovingIO TestCount f (PropertyStatus, TestCount)
 myCheck qcoptions rnd a = myTests qcoptions (evaluate a) rnd 0 0 []
 
-myTests :: CompleteQuickCheckOptions -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> ImprovingIO TestCount (PropertyStatus, TestCount) (PropertyStatus, TestCount)
+myTests :: CompleteQuickCheckOptions -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> ImprovingIO TestCount f (PropertyStatus, TestCount)
 myTests qcoptions gen rnd0 ntest nfail stamps
   | ntest == unK (qcopt_maximum_tests qcoptions)    = do return (PropertyOK, ntest)
   | nfail == unK (qcopt_maximum_failures qcoptions) = do return (PropertyArgumentsExhausted, ntest)

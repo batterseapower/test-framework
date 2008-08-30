@@ -17,6 +17,9 @@ instance Functor ((:~>) i) where
 
 newtype ImprovingIO i f a = IIO { unIIO :: Chan (Either i f) -> IO a }
 
+instance Functor (ImprovingIO i f) where
+    fmap = liftM
+
 instance Monad (ImprovingIO i f) where
     return x = IIO (const $ return x)
     ma >>= f = IIO $ \chan -> do
