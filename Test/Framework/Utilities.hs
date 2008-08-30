@@ -7,18 +7,6 @@ import Data.Monoid
 newtype K a = K { unK :: a }
 
 
-eraseStr :: Int -> IO ()
-eraseStr num = putStr (replicate num '\b')
-
-putStrIndented :: Int -> String -> IO ()
-putStrIndented how_much = putStr . indent how_much
-
-putStrLnIndented :: Int -> String -> IO ()
-putStrLnIndented how_much = putStrLn . indent how_much
-
-indent :: Int -> String -> String
-indent how_much what = (replicate how_much ' ') ++ what
-
 mappendBy :: Monoid b => (a -> b) -> a -> a -> b
 mappendBy f left right = (f left) `mappend` (f right)
 
@@ -48,3 +36,10 @@ unlinesConcise :: [String] -> String
 unlinesConcise []     = []
 unlinesConcise [l]    = l
 unlinesConcise (l:ls) = l ++ '\n' : unlinesConcise ls
+
+mapAccumLM :: Monad m => (acc -> x -> m (acc, y)) -> acc -> [x] -> m (acc, [y])
+mapAccumLM _ acc [] = return (acc, [])
+mapAccumLM f acc (x:xs) = do
+    (acc', y) <- f acc x
+    (acc'', ys) <- mapAccumLM f acc' xs
+    return (acc'', y:ys)

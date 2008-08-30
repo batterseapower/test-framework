@@ -7,6 +7,8 @@ import Test.Framework.Improving
 import Test.Framework.Options
 import Test.Framework.Processors
 import Test.Framework.QuickCheck
+import Test.Framework.Runners.Console.ProgressBar
+import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Seed
@@ -69,7 +71,10 @@ defaultMainWithOpts tests ropts = do
     run_tests <- runTests (unK $ ropt_threads ropts') (unK $ ropt_test_options ropts') tests
     
     -- Show those test results to the user as we get them
-    result <- showRunTests 0 run_tests
+    let leaf_count = countRunTestsLeaves run_tests
+    (_, result) <- showRunTests 0 (Progress 0 leaf_count) run_tests
+    
+    -- Set the error code depending on whether the tests succeded or not
     exitWith $ if result
                then ExitSuccess
                else ExitFailure 1
@@ -94,26 +99,36 @@ completeQuickCheckOptions qco = QuickCheckOptions {
         }
 
 
-showRunTest :: Int -> RunTest -> IO Bool
-showRunTest indent_level (RunProperty name improving_result) = do
+countRunTestLeaves :: RunTest -> Int
+countRunTestLeaves (RunProperty _ _) = 1
+countRunTestLeaves (RunTestGroup _ tests) = countRunTestsLeaves tests
+
+countRunTestsLeaves :: [RunTest] -> Int
+countRunTestsLeaves = sum . map countRunTestLeaves
+
+
+-- This code all /really/ sucks.  There must be a better way to seperate out the console-updating
+-- and the improvement-traversing concerns - but how?
+showRunTest :: Int -> Progress -> RunTest -> IO (Progress, Bool)
+showRunTest indent_level progress@(Progress current total) (RunProperty name improving_result) = do
     putStrIndented indent_level (name ++ ": ")
-    result <- showImprovingPropertyResult 0 improving_result
-    return (propertySucceeded result)
-showRunTest indent_level (RunTestGroup name tests) = do
+    result <- showImprovingPropertyResult 0 (showProgressBar 80 progress) improving_result
+    return (Progress (current + 1) total, propertySucceeded result)
+showRunTest indent_level progress (RunTestGroup name tests) = do
     putStrLnIndented indent_level (name ++ ":")
-    showRunTests (indent_level + 2) tests
+    showRunTests (indent_level + 2) progress tests
 
-showRunTests :: Int -> [RunTest] -> IO Bool
-showRunTests indent_level = fmap and . mapM (showRunTest indent_level)
+showRunTests :: Int -> Progress -> [RunTest] -> IO (Progress, Bool)
+showRunTests indent_level progress = fmap (onRight and) . mapAccumLM (showRunTest indent_level) progress
 
-showImprovingPropertyResult :: Int -> (TestCount :~> PropertyResult) -> IO PropertyResult
-showImprovingPropertyResult erase_amount (Finished result) = do
+showImprovingPropertyResult :: Int -> String -> (TestCount :~> PropertyResult) -> IO PropertyResult
+showImprovingPropertyResult erase_amount _ (Finished result) = do
     eraseStr erase_amount
     putStrLn (show result)
     return result
-showImprovingPropertyResult erase_amount (Improving tests rest) = do
+showImprovingPropertyResult erase_amount progress_bar (Improving tests rest) = do
     eraseStr erase_amount
-    putStr tests_str
-    showImprovingPropertyResult (length tests_str) rest
+    putStr (tests_str ++ progress_bar)
+    showImprovingPropertyResult (length tests_str + length progress_bar) progress_bar rest
   where  
     tests_str = show tests

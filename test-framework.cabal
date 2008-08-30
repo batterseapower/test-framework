@@ -33,9 +33,12 @@ Library
                                 Test.Framework.Runners.Options
                                 Test.Framework.Seed
         
-        Other-Modules:          Test.Framework.Processors
+        Other-Modules:          Test.Framework.Improving
+                                Test.Framework.Processors
                                 Test.Framework.QuickCheck
                                 Test.Framework.Utilities
+                                Test.Framework.Runners.Console.ProgressBar
+                                Test.Framework.Runners.Console.Utilities
                                 Test.Framework.Runners.Core
                                 Test.Framework.ThreadPool
                                 Test.Framework.Utilities
