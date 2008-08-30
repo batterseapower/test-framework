@@ -4,7 +4,7 @@ import Data.Maybe
 import Data.Monoid
 
 
-data K a = K { unK :: a }
+newtype K a = K { unK :: a }
 
 
 eraseStr :: Int -> IO ()
