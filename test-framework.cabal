@@ -38,12 +38,11 @@ Library
                                 Test.Framework.QuickCheck
                                 Test.Framework.Utilities
                                 Test.Framework.Runners.Console.ProgressBar
-                                Test.Framework.Runners.Console.Utilities
                                 Test.Framework.Runners.Core
                                 Test.Framework.ThreadPool
                                 Test.Framework.Utilities
         
-        Build-Depends:          QuickCheck >= 1.1
+        Build-Depends:          QuickCheck >= 1.1, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2
         if flag(splitBase)
                 Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -64,7 +63,7 @@ Library
 Executable test-framework-tests
         Main-Is:                Test/Framework/Tests.hs
 
-        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2
+        Build-Depends:          QuickCheck >= 1.1, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, HUnit >= 1.2
         if flag(splitBase)
                 Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -88,7 +87,7 @@ Executable test-framework-tests
 Executable test-framework-example
         Main-Is:                Test/Framework/Example.lhs
 
-        Build-Depends:          QuickCheck >= 1.1
+        Build-Depends:          QuickCheck >= 1.1, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2
         if flag(splitBase)
                 Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -108,4 +107,3 @@ Executable test-framework-example
         
         if !flag(example)
                 Buildable:      False
-        

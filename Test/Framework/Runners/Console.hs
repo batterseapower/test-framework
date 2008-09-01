@@ -8,7 +8,6 @@ import Test.Framework.Options
 import Test.Framework.Processors
 import Test.Framework.QuickCheck
 import Test.Framework.Runners.Console.ProgressBar
-import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Seed
@@ -16,12 +15,21 @@ import Test.Framework.Utilities
 
 import qualified Test.QuickCheck as QC
 
+import System.Console.ANSI
 import System.Console.GetOpt
 import System.Environment
 import System.Exit
 
+import Text.PrettyPrint.ANSI.Leijen
+
+import Data.List
 import Data.Maybe
 import Data.Monoid
+
+import Control.Monad
+
+
+import System.IO
 
 
 optionsDescription :: [OptDescr RunnerOptions]
@@ -71,8 +79,9 @@ defaultMainWithOpts tests ropts = do
     run_tests <- runTests (unK $ ropt_threads ropts') (unK $ ropt_test_options ropts') tests
     
     -- Show those test results to the user as we get them
+    hideCursor
     let leaf_count = countRunTestsLeaves run_tests
-    (_, result) <- showRunTests 0 (Progress 0 leaf_count) run_tests
+    (_, result) <- showRunTests 0 (False, (Progress 0 leaf_count)) run_tests
     
     -- Set the error code depending on whether the tests succeded or not
     exitWith $ if result
@@ -109,26 +118,42 @@ countRunTestsLeaves = sum . map countRunTestLeaves
 
 -- This code all /really/ sucks.  There must be a better way to seperate out the console-updating
 -- and the improvement-traversing concerns - but how?
-showRunTest :: Int -> Progress -> RunTest -> IO (Progress, Bool)
-showRunTest indent_level progress@(Progress current total) (RunProperty name improving_result) = do
-    putStrIndented indent_level (name ++ ": ")
-    result <- showImprovingPropertyResult 0 (showProgressBar 80 progress) improving_result
-    return (Progress (current + 1) total, propertySucceeded result)
-showRunTest indent_level progress (RunTestGroup name tests) = do
-    putStrLnIndented indent_level (name ++ ":")
-    showRunTests (indent_level + 2) progress tests
+showRunTest :: Int -> (Bool, Progress) -> RunTest -> IO ((Bool, Progress), Bool)
+showRunTest indent_level (any_failures, progress@(Progress current total)) (RunProperty name improving_result) = do
+    let progress_bar = showProgressBar (if any_failures then red else green) 80 progress
+    result <- showImprovingPropertyResult (return ()) indent_level name progress_bar improving_result
+    return ((any_failures || not result, Progress (current + 1) total), result)
+showRunTest indent_level any_failures_and_progress (RunTestGroup name tests) = do
+    putDoc $ indent indent_level (text name <> char ':' <> linebreak)
+    showRunTests (indent_level + 2) any_failures_and_progress tests
 
-showRunTests :: Int -> Progress -> [RunTest] -> IO (Progress, Bool)
-showRunTests indent_level progress = fmap (onRight and) . mapAccumLM (showRunTest indent_level) progress
+showRunTests :: Int -> (Bool, Progress) -> [RunTest] -> IO ((Bool, Progress), Bool)
+showRunTests indent_level any_failures_and_progress = fmap (onRight and) . mapAccumLM (showRunTest indent_level) any_failures_and_progress
 
-showImprovingPropertyResult :: Int -> String -> (TestCount :~> PropertyResult) -> IO PropertyResult
-showImprovingPropertyResult erase_amount _ (Finished result) = do
-    eraseStr erase_amount
-    putStrLn (show result)
-    return result
-showImprovingPropertyResult erase_amount progress_bar (Improving tests rest) = do
-    eraseStr erase_amount
-    putStr (tests_str ++ progress_bar)
-    showImprovingPropertyResult (length tests_str + length progress_bar) progress_bar rest
+showImprovingPropertyResult :: IO () -> Int -> String -> Doc -> (TestCount :~> PropertyResult) -> IO Bool
+showImprovingPropertyResult erase indent_level test_name _ (Finished result) = do
+    erase
+    -- Output the final test status and a trailing newline
+    putTestHeader indent_level test_name result_doc
+    -- There may still be a progress bar on the line below the final test result, so 
+    -- remove it as a precautionary measure in case this is the last test in a group
+    -- and hence it will not be erased in the normal course of test display.
+    clearLine
+    -- Output any extra information that may be required, e.g. to show failure reason
+    putDoc extra_doc
+    return success
+  where
+    success = propertySucceeded result
+    (result_doc, extra_doc) | success   = (brackets $ green (text (show result)), empty)
+                            | otherwise = (brackets (red (text "Failed")), text (show result))
+showImprovingPropertyResult erase indent_level test_name progress_bar (Improving tests rest) = do
+    erase
+    putTestHeader indent_level test_name (brackets (text tests_str))
+    when (tests `mod` 10 == 0) $ putDoc progress_bar
+    hFlush stdout
+    showImprovingPropertyResult (previousLine 1 >> clearLine) indent_level test_name progress_bar rest
   where  
     tests_str = show tests
+
+putTestHeader :: Int -> String -> Doc -> IO ()
+putTestHeader indent_level test_name result = putDoc $ indent indent_level (text test_name <> char ':' <+> result) <> linebreak
