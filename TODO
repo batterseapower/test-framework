@@ -1,10 +1,9 @@
 === High Priority ===
 Allow control over which tests to run on the command line
-Overall progress reporting
+Controlled console update interval
 
 === Medium Priority ===
 Let people add their own TestOptions structures into their Test configuration
 HUnit integration
 
 === Low Priority ===
-Colorisation of console output to show success / failure
