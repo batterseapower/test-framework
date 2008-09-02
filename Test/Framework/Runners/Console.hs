@@ -8,6 +8,7 @@ import Test.Framework.Options
 import Test.Framework.Processors
 import Test.Framework.QuickCheck
 import Test.Framework.Runners.Console.ProgressBar
+import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Seed
@@ -72,14 +73,13 @@ defaultMainWithArgs tests args = do
         Left error_message   -> putStrLn error_message
 
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
-defaultMainWithOpts tests ropts = do
+defaultMainWithOpts tests ropts = hideCursorIn $ do
     let ropts' = completeRunnerOptions ropts
     
     -- Get a lazy list of the test results, as executed in parallel
     run_tests <- runTests (unK $ ropt_threads ropts') (unK $ ropt_test_options ropts') tests
     
     -- Show those test results to the user as we get them
-    hideCursor
     let leaf_count = countRunTestsLeaves run_tests
     (_, result) <- showRunTests 0 (False, (Progress 0 leaf_count)) run_tests
     
