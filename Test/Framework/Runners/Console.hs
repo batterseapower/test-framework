@@ -69,8 +69,12 @@ defaultMainWithArgs tests args = do
     interpreted_args <- interpretArgs args
     case interpreted_args of
         Right (ropts, [])    -> defaultMainWithOpts tests ropts
-        Right (_, leftovers) -> putStrLn $ "Could not understand these extra arguments: " ++ unwords leftovers
-        Left error_message   -> putStrLn error_message
+        Right (_, leftovers) -> do
+            putStrLn $ "Could not understand these extra arguments: " ++ unwords leftovers
+            exitWith (ExitFailure 1)
+        Left error_message   -> do
+            putStrLn error_message
+            exitWith (ExitFailure 1)
 
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
 defaultMainWithOpts tests ropts = hideCursorIn $ do
