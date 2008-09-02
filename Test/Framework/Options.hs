@@ -1,6 +1,5 @@
 module Test.Framework.Options where
 
-import Test.Framework.Core
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
@@ -28,8 +27,8 @@ instance Monoid (TestOptions' Maybe) where
 type QuickCheckOptions = QuickCheckOptions' Maybe
 type CompleteQuickCheckOptions = QuickCheckOptions' K
 data QuickCheckOptions' f = QuickCheckOptions {
-        qcopt_maximum_tests :: f TestCount,
-        qcopt_maximum_failures :: f TestCount
+        qcopt_maximum_tests :: f Int,
+        qcopt_maximum_failures :: f Int
     }
 
 instance Monoid (QuickCheckOptions' Maybe) where

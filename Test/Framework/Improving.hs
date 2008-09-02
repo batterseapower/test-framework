@@ -1,6 +1,6 @@
 module Test.Framework.Improving (
         (:~>)(..), 
-        ImprovingIO, yieldImprovement, runImprovingIO
+        ImprovingIO, yieldImprovement, runImprovingIO, liftIO
     ) where
 
 import Control.Concurrent.Chan
@@ -35,8 +35,11 @@ runImprovingIO iio = do
     let action = do
             result <- unIIO iio chan
             writeChan chan (Right result)
-    improving_value <- fmap reifyListToImproving $ getChanContents chan
-    return (improving_value, action)
+    improving_value <- getChanContents chan
+    return (reifyListToImproving improving_value, action)
+
+liftIO :: IO a -> ImprovingIO i f a
+liftIO io = IIO $ const io
 
 reifyListToImproving :: [Either i f] -> (i :~> f)
 reifyListToImproving (Left improvement:rest) = Improving improvement (reifyListToImproving rest)

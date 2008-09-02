@@ -8,6 +8,7 @@ import Test.Framework.Options
 import Test.Framework.Processors
 import Test.Framework.QuickCheck
 import Test.Framework.Runners.Console.ProgressBar
+import Test.Framework.Runners.Console.Statistics
 import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
@@ -20,6 +21,7 @@ import System.Console.ANSI
 import System.Console.GetOpt
 import System.Environment
 import System.Exit
+import System.IO
 
 import Text.PrettyPrint.ANSI.Leijen
 
@@ -28,9 +30,6 @@ import Data.Maybe
 import Data.Monoid
 
 import Control.Monad
-
-
-import System.IO
 
 
 optionsDescription :: [OptDescr RunnerOptions]
@@ -84,13 +83,17 @@ defaultMainWithOpts tests ropts = hideCursorIn $ do
     run_tests <- runTests (unK $ ropt_threads ropts') (unK $ ropt_test_options ropts') tests
     
     -- Show those test results to the user as we get them
-    let leaf_count = countRunTestsLeaves run_tests
-    (_, result) <- showRunTests 0 (False, (Progress 0 leaf_count)) run_tests
+    let test_statistics = initialTestStatistics (totalRunTestsList run_tests)
+    test_statistics' <- showRunTests 0 test_statistics run_tests
+    
+    -- Show the final statistics
+    putStrLn ""
+    putStr $ showFinalTestStatistics test_statistics'
     
     -- Set the error code depending on whether the tests succeded or not
-    exitWith $ if result
-               then ExitSuccess
-               else ExitFailure 1
+    exitWith $ if ts_any_failures test_statistics'
+               then ExitFailure 1
+               else ExitSuccess
 
 
 completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions
@@ -112,29 +115,37 @@ completeQuickCheckOptions qco = QuickCheckOptions {
         }
 
 
-countRunTestLeaves :: RunTest -> Int
-countRunTestLeaves (RunProperty _ _) = 1
-countRunTestLeaves (RunTestGroup _ tests) = countRunTestsLeaves tests
+totalRunTests :: RunTest -> TestCount
+totalRunTests (RunProperty _ _)      = mempty { tc_properties = 1 }
+totalRunTests (RunTestGroup _ tests) = totalRunTestsList tests
 
-countRunTestsLeaves :: [RunTest] -> Int
-countRunTestsLeaves = sum . map countRunTestLeaves
+totalRunTestsList :: [RunTest] -> TestCount
+totalRunTestsList = mconcat . map totalRunTests
 
 
 -- This code all /really/ sucks.  There must be a better way to seperate out the console-updating
 -- and the improvement-traversing concerns - but how?
-showRunTest :: Int -> (Bool, Progress) -> RunTest -> IO ((Bool, Progress), Bool)
-showRunTest indent_level (any_failures, progress@(Progress current total)) (RunProperty name improving_result) = do
-    let progress_bar = showProgressBar (if any_failures then red else green) 80 progress
-    result <- showImprovingPropertyResult (return ()) indent_level name progress_bar improving_result
-    return ((any_failures || not result, Progress (current + 1) total), result)
-showRunTest indent_level any_failures_and_progress (RunTestGroup name tests) = do
+showRunTest :: Int -> TestStatistics -> RunTest -> IO TestStatistics
+showRunTest indent_level test_statistics (RunProperty name improving_result) = do
+    let run_tests    = tc_total (ts_run_tests test_statistics)
+        total_tests  = tc_total (ts_total_tests test_statistics)
+        any_failures = ts_any_failures test_statistics
+        progress_bar = showProgressBar (if any_failures then red else green) 80 (Progress run_tests total_tests)
+    property_suceeded <- showImprovingPropertyResult (return ()) indent_level name progress_bar improving_result
+    let test_statistics' = test_statistics {
+            ts_run_tests    = ts_run_tests test_statistics    `mappend` (mempty { tc_properties = 1 }),
+            ts_failed_tests = ts_failed_tests test_statistics `mappend` (mempty { tc_properties = if property_suceeded then 0 else 1 }),
+            ts_passed_tests = ts_passed_tests test_statistics `mappend` (mempty { tc_properties = if property_suceeded then 1 else 0 })
+        }
+    return test_statistics'
+showRunTest indent_level test_statistics (RunTestGroup name tests) = do
     putDoc $ indent indent_level (text name <> char ':' <> linebreak)
-    showRunTests (indent_level + 2) any_failures_and_progress tests
+    showRunTests (indent_level + 2) test_statistics tests
 
-showRunTests :: Int -> (Bool, Progress) -> [RunTest] -> IO ((Bool, Progress), Bool)
-showRunTests indent_level any_failures_and_progress = fmap (onRight and) . mapAccumLM (showRunTest indent_level) any_failures_and_progress
+showRunTests :: Int -> TestStatistics -> [RunTest] -> IO TestStatistics
+showRunTests indent_level = foldM (showRunTest indent_level)
 
-showImprovingPropertyResult :: IO () -> Int -> String -> Doc -> (TestCount :~> PropertyResult) -> IO Bool
+showImprovingPropertyResult :: IO () -> Int -> String -> Doc -> (PropertyTestCount :~> PropertyResult) -> IO Bool
 showImprovingPropertyResult erase indent_level test_name _ (Finished result) = do
     erase
     -- Output the final test status and a trailing newline
@@ -149,7 +160,7 @@ showImprovingPropertyResult erase indent_level test_name _ (Finished result) = d
   where
     success = propertySucceeded result
     (result_doc, extra_doc) | success   = (brackets $ green (text (show result)), empty)
-                            | otherwise = (brackets (red (text "Failed")), text (show result))
+                            | otherwise = (brackets (red (text "Failed")), text (show result) <> linebreak)
 showImprovingPropertyResult erase indent_level test_name progress_bar (Improving tests rest) = do
     erase
     putTestHeader indent_level test_name (brackets (text tests_str))

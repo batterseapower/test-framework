@@ -15,7 +15,7 @@ import Data.List
 
 
 -- | A test that has been executed
-data RunTest = RunProperty TestName (TestCount :~> PropertyResult)
+data RunTest = RunProperty TestName (PropertyTestCount :~> PropertyResult)
              | RunTestGroup TestName [RunTest]
 
 runTests :: Int                  -- ^ Number of threads to use to execute the tests

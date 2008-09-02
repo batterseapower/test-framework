@@ -1,9 +1,9 @@
 module Test.Framework.QuickCheck (
+        PropertyTestCount,
         PropertyResult, propertySucceeded,
         runProperty
     ) where
 
-import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
 import Test.Framework.Seed
@@ -16,11 +16,14 @@ import Data.List
 import System.Random
 
 
+-- | Used to document numbers which we expect to be intermediate test counts from running properties
+type PropertyTestCount = Int
+
 -- | The failure information from the run of a property
 data PropertyResult = PropertyResult {
         pr_status :: PropertyStatus,
         pr_used_seed :: Int,
-        pr_tests_run :: TestCount
+        pr_tests_run :: PropertyTestCount
     }
 
 data PropertyStatus = PropertyOK                   -- ^ The property is true as far as we could check it
@@ -43,7 +46,7 @@ propertyStatusIsSuccess PropertyArgumentsExhausted = True
 propertyStatusIsSuccess _                          = False
 
 
-runProperty :: Testable a => CompleteTestOptions -> a -> IO (TestCount :~> PropertyResult, IO ())
+runProperty :: Testable a => CompleteTestOptions -> a -> IO (PropertyTestCount :~> PropertyResult, IO ())
 runProperty topts testable = do
     (gen, seed) <- newSeededStdGen (unK $ topt_seed topts)
     runImprovingIO $ fmap (toPropertyResult seed) $ myCheck (unK $ topt_quickcheck_options topts) gen testable
@@ -54,10 +57,10 @@ runProperty topts testable = do
             pr_tests_run = tests_run
         }
 
-myCheck :: (Testable a) => CompleteQuickCheckOptions -> StdGen -> a -> ImprovingIO TestCount f (PropertyStatus, TestCount)
+myCheck :: (Testable a) => CompleteQuickCheckOptions -> StdGen -> a -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
 myCheck qcoptions rnd a = myTests qcoptions (evaluate a) rnd 0 0 []
 
-myTests :: CompleteQuickCheckOptions -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> ImprovingIO TestCount f (PropertyStatus, TestCount)
+myTests :: CompleteQuickCheckOptions -> Gen Result -> StdGen -> PropertyTestCount -> PropertyTestCount -> [[String]] -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
 myTests qcoptions gen rnd0 ntest nfail stamps
   | ntest == unK (qcopt_maximum_tests qcoptions)    = do return (PropertyOK, ntest)
   | nfail == unK (qcopt_maximum_failures qcoptions) = do return (PropertyArgumentsExhausted, ntest)

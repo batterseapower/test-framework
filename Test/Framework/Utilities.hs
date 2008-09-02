@@ -43,3 +43,6 @@ mapAccumLM f acc (x:xs) = do
     (acc', y) <- f acc x
     (acc'', ys) <- mapAccumLM f acc' xs
     return (acc'', y:ys)
+
+padRight :: Int -> String -> String
+padRight desired_length s = s ++ replicate (desired_length - length s) ' '
