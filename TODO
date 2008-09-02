@@ -1,6 +1,7 @@
 === High Priority ===
 Allow control over which tests to run on the command line
 Controlled console update interval
+Show test summary at end of run
 
 === Medium Priority ===
 Let people add their own TestOptions structures into their Test configuration
