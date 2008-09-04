@@ -26,11 +26,11 @@ Flag Example
         Default:        False
 
 Flag HUnit
-        Description:    Enable HUnit integration
+        Description:    Enable HUnit integration: disabling this is not recommended, as it changes the package API
         Default:        True
 
 Flag QuickCheck
-        Description:    Enable QuickCheck integration
+        Description:    Enable QuickCheck integration: disabling this is not recommended, as it changes the package API
         Default:        True
 
 
