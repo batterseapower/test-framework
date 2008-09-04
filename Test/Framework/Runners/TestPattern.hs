@@ -24,7 +24,7 @@ tokenize (c:rest)       = LiteralToken c : tokenize rest
 tokenize []             = []
 
 
-data TestPatternMatchMode = FileMatchMode
+data TestPatternMatchMode = TestMatchMode
                           | PathMatchMode
 
 data TestPattern = TestPattern {
@@ -54,7 +54,7 @@ parseTestPattern string = TestPattern {
       | otherwise                                                      = (False, tokens')
     match_mode
       | SlashToken `elem` tokens = PathMatchMode
-      | otherwise                = FileMatchMode
+      | otherwise                = TestMatchMode
 
 
 testPatternMatches :: TestPattern -> [String] -> Bool
@@ -68,14 +68,18 @@ testPatternMatches test_pattern path = not_maybe $ any (=~ tokens_regex) things_
     
     things_to_match = case tp_match_mode test_pattern of
         -- See if the tokens match any single path component
-        FileMatchMode -> path_to_consider
+        TestMatchMode -> path_to_consider
         -- See if the tokens match any prefix of the path
         PathMatchMode -> map pathToString $ inits path_to_consider
 
 
 buildTokenRegex :: [Token] -> String
-buildTokenRegex = concatMap tokenToRegex
+buildTokenRegex [] = []
+buildTokenRegex (token:tokens) = concat (firstTokenToRegex token : map tokenToRegex tokens)
   where
+    firstTokenToRegex SlashToken = "^"
+    firstTokenToRegex other = tokenToRegex other
+      
     tokenToRegex SlashToken = "/"
     tokenToRegex WildcardToken = "[^/]*"
     tokenToRegex DoubleWildcardToken = "*"
