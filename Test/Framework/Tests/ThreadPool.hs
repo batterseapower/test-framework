@@ -13,8 +13,8 @@ import Control.Monad
 import Prelude hiding (catch)
 
 
-expectBroken :: Assertion -> Assertion
-expectBroken assertion = do
+_expectBroken :: Assertion -> Assertion
+_expectBroken assertion = do
     did_succeed <- catch (assertion >> return True) (const $ return False)
     when did_succeed $ assertFailure "Test unexpectedly succeeded"
 
