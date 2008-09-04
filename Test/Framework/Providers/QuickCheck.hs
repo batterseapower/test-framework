@@ -1,20 +1,27 @@
-module Test.Framework.QuickCheck (
-        PropertyTestCount,
-        PropertyResult, propertySucceeded,
-        runProperty
+module Test.Framework.Providers.QuickCheck (
+        testProperty
     ) where
 
+import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
-import Test.QuickCheck
+import Test.QuickCheck hiding (Property)
 
 import Data.List
 
 import System.Random
 
+
+-- | Create a 'Test' for a QuickCheck 'Testable' property
+testProperty :: Testable a => TestName -> a -> Test
+testProperty name = Test name . Property
+
+
+instance TestResultlike PropertyTestCount PropertyResult where
+    testSucceeded = propertySucceeded
 
 -- | Used to document numbers which we expect to be intermediate test counts from running properties
 type PropertyTestCount = Int
@@ -45,6 +52,12 @@ propertyStatusIsSuccess PropertyOK                 = True
 propertyStatusIsSuccess PropertyArgumentsExhausted = True
 propertyStatusIsSuccess _                          = False
 
+
+data Property = forall a. Testable a => Property a
+
+instance Testlike PropertyTestCount PropertyResult Property where
+    runTest topts (Property testable) = runProperty topts testable
+    testTypeName _ = "Properties"
 
 runProperty :: Testable a => CompleteTestOptions -> a -> IO (PropertyTestCount :~> PropertyResult, IO ())
 runProperty topts testable = do

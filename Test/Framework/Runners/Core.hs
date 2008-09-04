@@ -5,7 +5,6 @@ module Test.Framework.Runners.Core (
 import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
-import Test.Framework.QuickCheck
 import Test.Framework.ThreadPool
 import Test.Framework.Utilities
 import Test.Framework.Runners.Options
@@ -18,7 +17,7 @@ import Data.Maybe
 
 
 -- | A test that has been executed
-data RunTest = RunProperty TestName (PropertyTestCount :~> PropertyResult)
+data RunTest = forall i r. TestResultlike i r => RunTest TestName TestTypeName (i :~> r)
              | RunTestGroup TestName [RunTest]
 
 runTests :: CompleteRunnerOptions -- ^ Top-level runner options
@@ -37,7 +36,7 @@ filterTests :: [TestPattern] -> [String] -> [Test] -> [Test]
 filterTests patterns path = mapMaybe (filterTest patterns path)
 
 filterTest :: [TestPattern] -> [String] -> Test -> Maybe Test
-filterTest patterns path test@(Property name _)
+filterTest patterns path test@(Test name _)
   | any (`testPatternMatches` (path ++ [name])) patterns = Just test
   | otherwise                                            = Nothing
 filterTest patterns path (TestGroup name tests)
@@ -48,9 +47,9 @@ filterTest patterns path (TestGroup name tests)
 
 
 runTest' :: CompleteTestOptions -> Test -> IO (RunTest, [IO ()])
-runTest' topts (Property name testable) = do
-    (result, action) <- runProperty topts testable
-    return (RunProperty name result, [action])
+runTest' topts (Test name testlike) = do
+    (result, action) <- runTest topts testlike
+    return (RunTest name (testTypeName testlike) result, [action])
 runTest' topts (TestGroup name tests) = fmap (onLeft (RunTestGroup name)) $ runTests' topts tests
 
 runTests' :: CompleteTestOptions -> [Test] -> IO ([RunTest], [IO ()])

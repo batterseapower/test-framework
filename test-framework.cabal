@@ -27,16 +27,16 @@ Flag Example
 
 Library
         Exposed-Modules:        Test.Framework
-                                Test.Framework.Core
                                 Test.Framework.Options
                                 Test.Framework.Runners.Console
                                 Test.Framework.Runners.Options
                                 Test.Framework.Seed
         
-        Other-Modules:          Test.Framework.Improving
+        Other-Modules:          Test.Framework.Core
+                                Test.Framework.Improving
                                 Test.Framework.Processors
-                                Test.Framework.QuickCheck
-                                Test.Framework.Utilities
+                                Test.Framework.Providers.QuickCheck
+                                Test.Framework.Providers.HUnit
                                 Test.Framework.Runners.Console.ProgressBar
                                 Test.Framework.Runners.Console.Statistics
                                 Test.Framework.Runners.Console.Table
@@ -46,7 +46,7 @@ Library
                                 Test.Framework.ThreadPool
                                 Test.Framework.Utilities
         
-        Build-Depends:          QuickCheck >= 1.1, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, regex-posix >= 0.72
+        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -57,7 +57,10 @@ Library
                                 ExistentialQuantification
                                 RecursiveDo
                                 FlexibleInstances
+                                TypeSynonymInstances
                                 TypeOperators
+                                FunctionalDependencies
+                                MultiParamTypeClasses
         
         Ghc-Options:            -Wall
         
@@ -67,7 +70,7 @@ Library
 Executable test-framework-tests
         Main-Is:                Test/Framework/Tests.hs
 
-        Build-Depends:          QuickCheck >= 1.1, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, regex-posix >= 0.72, HUnit >= 1.2
+        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -78,7 +81,10 @@ Executable test-framework-tests
                                 ExistentialQuantification
                                 RecursiveDo
                                 FlexibleInstances
+                                TypeSynonymInstances
                                 TypeOperators
+                                FunctionalDependencies
+                                MultiParamTypeClasses
         
         Ghc-Options:            -Wall -threaded
         
@@ -91,7 +97,7 @@ Executable test-framework-tests
 Executable test-framework-example
         Main-Is:                Test/Framework/Example.lhs
 
-        Build-Depends:          QuickCheck >= 1.1, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, regex-posix >= 0.72
+        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.2.1, ansi-wl-pprint >= 0.2, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:  base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -102,7 +108,10 @@ Executable test-framework-example
                                 ExistentialQuantification
                                 RecursiveDo
                                 FlexibleInstances
+                                TypeSynonymInstances
                                 TypeOperators
+                                FunctionalDependencies
+                                MultiParamTypeClasses
         
         Ghc-Options:            -threaded
         
