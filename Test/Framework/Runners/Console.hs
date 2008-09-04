@@ -14,8 +14,6 @@ import Test.Framework.Runners.Options
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
-import qualified Test.QuickCheck as QC
-
 import System.Console.ANSI
 import System.Console.GetOpt
 import System.Environment
@@ -39,13 +37,13 @@ optionsDescription = [
         Option [] ["test-seed"]
             (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_seed = Just (read t) }) }) ("NUMBER|" ++ show RandomSeed))
             "default seed for test random number generator",
-        Option ['t'] ["qc-maximum-tests"]
-            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_quickcheck_options = Just (mempty { qcopt_maximum_tests = Just (read t) }) }) }) "NUMBER")
-            "how many tests QuickCheck should try, by default",
-        Option [] ["qc-maximum-failures"]
-            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_quickcheck_options = Just (mempty { qcopt_maximum_failures = Just (read t) }) }) }) "NUMBER")
-            "how many unsuitable candidate bits of test data QuickCheck will endure before giving up, by default",
-        Option ['s'] ["select-tests"]
+        Option ['a'] ["maximum-generated-tests"]
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_maximum_generated_tests = Just (read t) }) }) "NUMBER")
+            "how many automated tests something like QuickCheck should try, by default",
+        Option [] ["maximum-unsuitable-generated-tests"]
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_maximum_unsuitable_generated_tests = Just (read t) }) }) "NUMBER")
+            "how many unsuitable candidate tests something like QuickCheck should endure before giving up, by default",
+        Option ['t'] ["select-tests"]
             (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "[!]((TEST_OR_CATEGORY_NAME | * | **) [/])+")
             "only tests that match at least one glob pattern given by an instance of this argument will be run"
     ]
@@ -108,13 +106,8 @@ completeRunnerOptions ro = RunnerOptions {
 completeTestOptions :: TestOptions -> CompleteTestOptions
 completeTestOptions to = TestOptions {
             topt_seed = K $ topt_seed to `orElse` RandomSeed,
-            topt_quickcheck_options = K $ completeQuickCheckOptions (topt_quickcheck_options to `orElse` mempty)
-        }
-
-completeQuickCheckOptions :: QuickCheckOptions -> CompleteQuickCheckOptions
-completeQuickCheckOptions qco = QuickCheckOptions {
-            qcopt_maximum_tests = K $ qcopt_maximum_tests qco `orElse` QC.configMaxTest QC.defaultConfig,
-            qcopt_maximum_failures = K $ qcopt_maximum_failures qco `orElse` QC.configMaxFail QC.defaultConfig
+            topt_maximum_generated_tests = K $ topt_maximum_generated_tests to `orElse` 100,
+            topt_maximum_unsuitable_generated_tests = K $ topt_maximum_unsuitable_generated_tests to `orElse` 1000
         }
 
 

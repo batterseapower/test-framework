@@ -62,7 +62,7 @@ instance Testlike PropertyTestCount PropertyResult Property where
 runProperty :: Testable a => CompleteTestOptions -> a -> IO (PropertyTestCount :~> PropertyResult, IO ())
 runProperty topts testable = do
     (gen, seed) <- newSeededStdGen (unK $ topt_seed topts)
-    runImprovingIO $ fmap (toPropertyResult seed) $ myCheck (unK $ topt_quickcheck_options topts) gen testable
+    runImprovingIO $ fmap (toPropertyResult seed) $ myCheck topts gen testable
   where
     toPropertyResult seed (status, tests_run) = PropertyResult {
             pr_status = status,
@@ -70,20 +70,20 @@ runProperty topts testable = do
             pr_tests_run = tests_run
         }
 
-myCheck :: (Testable a) => CompleteQuickCheckOptions -> StdGen -> a -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
-myCheck qcoptions rnd a = myTests qcoptions (evaluate a) rnd 0 0 []
+myCheck :: (Testable a) => CompleteTestOptions -> StdGen -> a -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
+myCheck topts rnd a = myTests topts (evaluate a) rnd 0 0 []
 
-myTests :: CompleteQuickCheckOptions -> Gen Result -> StdGen -> PropertyTestCount -> PropertyTestCount -> [[String]] -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
-myTests qcoptions gen rnd0 ntest nfail stamps
-  | ntest == unK (qcopt_maximum_tests qcoptions)    = do return (PropertyOK, ntest)
-  | nfail == unK (qcopt_maximum_failures qcoptions) = do return (PropertyArgumentsExhausted, ntest)
+myTests :: CompleteTestOptions -> Gen Result -> StdGen -> PropertyTestCount -> PropertyTestCount -> [[String]] -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
+myTests topts gen rnd0 ntest nfail stamps
+  | ntest == unK (topt_maximum_generated_tests topts)            = do return (PropertyOK, ntest)
+  | nfail == unK (topt_maximum_unsuitable_generated_tests topts) = do return (PropertyArgumentsExhausted, ntest)
   | otherwise = do
       yieldImprovement ntest
       case ok result of
           Nothing    ->
-            myTests qcoptions gen rnd1 ntest (nfail + 1) stamps
+            myTests topts gen rnd1 ntest (nfail + 1) stamps
           Just True  ->
-            myTests qcoptions gen rnd1 (ntest + 1) nfail (stamp result:stamps)
+            myTests topts gen rnd1 (ntest + 1) nfail (stamp result:stamps)
           Just False ->
             return (PropertyFalsifiable (arguments result), ntest)
   where
