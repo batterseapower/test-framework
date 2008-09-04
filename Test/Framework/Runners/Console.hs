@@ -45,7 +45,10 @@ optionsDescription = [
             "how many tests QuickCheck should try, by default",
         Option [] ["qc-maximum-failures"]
             (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_quickcheck_options = Just (mempty { qcopt_maximum_failures = Just (read t) }) }) }) "NUMBER")
-            "how many unsuitable candidate bits of test data QuickCheck will endure before giving up, by default"
+            "how many unsuitable candidate bits of test data QuickCheck will endure before giving up, by default",
+        Option ['s'] ["select-tests"]
+            (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "[!]((TEST_OR_CATEGORY_NAME | * | **) [/])+")
+            "only tests that match at least one glob pattern given by an instance of this argument will be run"
     ]
 
 interpretArgs :: [String] -> IO (Either String (RunnerOptions, [String]))
@@ -80,7 +83,7 @@ defaultMainWithOpts tests ropts = hideCursorIn $ do
     let ropts' = completeRunnerOptions ropts
     
     -- Get a lazy list of the test results, as executed in parallel
-    run_tests <- runTests (unK $ ropt_threads ropts') (unK $ ropt_test_options ropts') tests
+    run_tests <- runTests ropts' tests
     
     -- Show those test results to the user as we get them
     let test_statistics = initialTestStatistics (totalRunTestsList run_tests)
@@ -99,7 +102,8 @@ defaultMainWithOpts tests ropts = hideCursorIn $ do
 completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions
 completeRunnerOptions ro = RunnerOptions {
             ropt_threads = K $ ropt_threads ro `orElse` processorCount,
-            ropt_test_options = K $ completeTestOptions (ropt_test_options ro `orElse` mempty)
+            ropt_test_options = K $ completeTestOptions (ropt_test_options ro `orElse` mempty),
+            ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty
         }
 
 completeTestOptions :: TestOptions -> CompleteTestOptions

@@ -8,24 +8,44 @@ import Test.Framework.Options
 import Test.Framework.QuickCheck
 import Test.Framework.ThreadPool
 import Test.Framework.Utilities
+import Test.Framework.Runners.Options
+import Test.Framework.Runners.TestPattern
 
 import Control.Monad
 
 import Data.List
+import Data.Maybe
 
 
 -- | A test that has been executed
 data RunTest = RunProperty TestName (PropertyTestCount :~> PropertyResult)
              | RunTestGroup TestName [RunTest]
 
-runTests :: Int                  -- ^ Number of threads to use to execute the tests
-          -> CompleteTestOptions -- ^ Top-level test options
-          -> [Test]              -- ^ Tests to run
-          -> IO [RunTest]
-runTests threads topts tests = do
-    (run_tests, actions) <- runTests' topts tests
-    executeOnPool threads actions
+runTests :: CompleteRunnerOptions -- ^ Top-level runner options
+         -> [Test]                -- ^ Tests to run
+         -> IO [RunTest]
+runTests ropts tests = do
+    let test_patterns = unK $ ropt_test_patterns ropts
+        tests' | null test_patterns = tests
+               | otherwise          = filterTests test_patterns [] tests
+    (run_tests, actions) <- runTests' (unK $ ropt_test_options ropts) tests'
+    executeOnPool (unK $ ropt_threads ropts) actions
     return run_tests
+
+
+filterTests :: [TestPattern] -> [String] -> [Test] -> [Test]
+filterTests patterns path = mapMaybe (filterTest patterns path)
+
+filterTest :: [TestPattern] -> [String] -> Test -> Maybe Test
+filterTest patterns path test@(Property name _)
+  | any (`testPatternMatches` (path ++ [name])) patterns = Just test
+  | otherwise                                            = Nothing
+filterTest patterns path (TestGroup name tests)
+  | null tests' = Nothing
+  | otherwise   = Just (TestGroup name tests')
+  where
+    tests' = filterTests patterns (path ++ [name]) tests
+
 
 runTest' :: CompleteTestOptions -> Test -> IO (RunTest, [IO ()])
 runTest' topts (Property name testable) = do

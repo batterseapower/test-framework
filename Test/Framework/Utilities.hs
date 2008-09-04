@@ -46,3 +46,6 @@ mapAccumLM f acc (x:xs) = do
 
 padRight :: Int -> String -> String
 padRight desired_length s = s ++ replicate (desired_length - length s) ' '
+
+dropLast :: Int -> [a] -> [a]
+dropLast n = reverse . drop n . reverse
