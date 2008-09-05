@@ -4,6 +4,8 @@ module Test.Framework.Providers.HUnit (
 
 import Test.Framework.Core
 import Test.Framework.Improving
+import Test.Framework.Options
+import Test.Framework.Utilities
 
 import Test.HUnit.Lang
 
@@ -39,12 +41,19 @@ testCaseSucceeded _              = False
 newtype TestCase = TestCase Assertion
 
 instance Testlike TestCaseRunning TestCaseResult TestCase where
-    runTest _topts (TestCase assertion) = runTestCase assertion
+    runTest topts (TestCase assertion) = runTestCase topts assertion
     testTypeName _ = "Test Cases"
 
-runTestCase :: Assertion -> IO (TestCaseRunning :~> TestCaseResult, IO ())
-runTestCase assertion = runImprovingIO $ fmap toTestCaseResult $ yieldImprovement TestCaseRunning >> liftIO (performTestCase assertion)
-  where
-    toTestCaseResult Nothing                 = TestCasePassed
-    toTestCaseResult (Just (True, message))  = TestCaseFailed message
-    toTestCaseResult (Just (False, message)) = TestCaseError message
+runTestCase :: CompleteTestOptions -> Assertion -> IO (TestCaseRunning :~> TestCaseResult, IO ())
+runTestCase topts assertion = runImprovingIO $ do
+    yieldImprovement TestCaseRunning
+    mb_result <- maybeTimeoutImprovingIO (unK $ topt_timeout topts) $ liftIO (myPerformTestCase assertion)
+    return (mb_result `orElse` TestCaseError "Timed out")
+
+myPerformTestCase :: Assertion -> IO TestCaseResult
+myPerformTestCase assertion = do
+    result <- performTestCase assertion
+    return $ case result of
+        Nothing               -> TestCasePassed
+        Just (True, message)  -> TestCaseFailed message
+        Just (False, message) -> TestCaseError message

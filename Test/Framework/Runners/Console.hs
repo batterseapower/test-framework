@@ -43,6 +43,12 @@ optionsDescription = [
         Option [] ["maximum-unsuitable-generated-tests"]
             (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_maximum_unsuitable_generated_tests = Just (read t) }) }) "NUMBER")
             "how many unsuitable candidate tests something like QuickCheck should endure before giving up, by default",
+        Option ['o'] ["timeout"]
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_timeout = Just (Just (read t)) }) }) "NUMBER")
+            "how long a test should be run for before giving up, by default",
+        Option [] ["no-timeout"]
+            (NoArg (mempty { ropt_test_options = Just (mempty { topt_timeout = Just Nothing }) }))
+            "specifies that tests should be run without a timeout, by default",
         Option ['t'] ["select-tests"]
             (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "[!]((TEST_OR_CATEGORY_NAME | * | **) [/])+")
             "only tests that match at least one glob pattern given by an instance of this argument will be run"
@@ -107,7 +113,8 @@ completeTestOptions :: TestOptions -> CompleteTestOptions
 completeTestOptions to = TestOptions {
             topt_seed = K $ topt_seed to `orElse` RandomSeed,
             topt_maximum_generated_tests = K $ topt_maximum_generated_tests to `orElse` 100,
-            topt_maximum_unsuitable_generated_tests = K $ topt_maximum_unsuitable_generated_tests to `orElse` 1000
+            topt_maximum_unsuitable_generated_tests = K $ topt_maximum_unsuitable_generated_tests to `orElse` 1000,
+            topt_timeout = K $ topt_timeout to `orElse` Nothing
         }
 
 

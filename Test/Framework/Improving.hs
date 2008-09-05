@@ -1,7 +1,10 @@
 module Test.Framework.Improving (
         (:~>)(..), 
-        ImprovingIO, yieldImprovement, runImprovingIO, liftIO
+        ImprovingIO, yieldImprovement, runImprovingIO, liftIO,
+        timeoutImprovingIO, maybeTimeoutImprovingIO
     ) where
+
+import Test.Framework.TimeoutIO
 
 import Control.Concurrent.Chan
 import Control.Monad
@@ -33,15 +36,22 @@ runImprovingIO :: ImprovingIO i f f -> IO (i :~> f, IO ())
 runImprovingIO iio = do
     chan <- newChan
     let action = do
-            result <- unIIO iio chan
-            writeChan chan (Right result)
+        result <- unIIO iio chan
+        writeChan chan (Right result)
     improving_value <- getChanContents chan
     return (reifyListToImproving improving_value, action)
-
-liftIO :: IO a -> ImprovingIO i f a
-liftIO io = IIO $ const io
 
 reifyListToImproving :: [Either i f] -> (i :~> f)
 reifyListToImproving (Left improvement:rest) = Improving improvement (reifyListToImproving rest)
 reifyListToImproving (Right final:_)         = Finished final
 reifyListToImproving []                      = error "reifyListToImproving: list finished before a final value arrived"
+
+liftIO :: IO a -> ImprovingIO i f a
+liftIO io = IIO $ const io
+
+timeoutImprovingIO :: Seconds -> ImprovingIO i f a -> ImprovingIO i f (Maybe a)
+timeoutImprovingIO seconds iio = IIO $ \chan -> timeoutIO seconds $ unIIO iio chan
+
+maybeTimeoutImprovingIO :: Maybe Seconds -> ImprovingIO i f a -> ImprovingIO i f (Maybe a)
+maybeTimeoutImprovingIO Nothing        = fmap Just
+maybeTimeoutImprovingIO (Just timeout) = timeoutImprovingIO timeout

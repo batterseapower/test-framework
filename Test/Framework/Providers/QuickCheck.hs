@@ -30,19 +30,24 @@ type PropertyTestCount = Int
 data PropertyResult = PropertyResult {
         pr_status :: PropertyStatus,
         pr_used_seed :: Int,
-        pr_tests_run :: PropertyTestCount
+        pr_tests_run :: Maybe PropertyTestCount -- Due to technical limitations, it's currently not possible to find out the number of
+                                                -- tests previously run if the test times out, hence we need a Maybe here for that case.
     }
 
 data PropertyStatus = PropertyOK                   -- ^ The property is true as far as we could check it
                     | PropertyArgumentsExhausted   -- ^ The property may be true, but we ran out of arguments to try it out on
                     | PropertyFalsifiable [String] -- ^ The property was not true. The list of strings are the arguments inducing failure.
+                    | PropertyTimedOut             -- ^ The property timed out during execution
 
 instance Show PropertyResult where
-    show (PropertyResult { pr_status = status, pr_used_seed = used_seed, pr_tests_run = tests_run })
+    show (PropertyResult { pr_status = status, pr_used_seed = used_seed, pr_tests_run = mb_tests_run })
       = case status of
-            PropertyOK                    -> "OK, passed " ++ show tests_run ++ " tests"
-            PropertyArgumentsExhausted    -> "Arguments exhausted after " ++ show tests_run ++ " tests"
-            PropertyFalsifiable test_args -> "Falsifiable with seed " ++ show used_seed ++ ", after " ++ show tests_run ++ " tests:\n" ++ unlinesConcise test_args
+            PropertyOK                    -> "OK, passed " ++ tests_run_str ++ " tests"
+            PropertyArgumentsExhausted    -> "Arguments exhausted after " ++ tests_run_str ++ " tests"
+            PropertyFalsifiable test_args -> "Falsifiable with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests:\n" ++ unlinesConcise test_args
+            PropertyTimedOut              -> "Timed out after " ++ tests_run_str ++ " tests"
+      where
+        tests_run_str = fmap show mb_tests_run `orElse` "an unknown number of"
 
 propertySucceeded :: PropertyResult -> Bool
 propertySucceeded result = propertyStatusIsSuccess (pr_status result)
@@ -62,12 +67,16 @@ instance Testlike PropertyTestCount PropertyResult Property where
 runProperty :: Testable a => CompleteTestOptions -> a -> IO (PropertyTestCount :~> PropertyResult, IO ())
 runProperty topts testable = do
     (gen, seed) <- newSeededStdGen (unK $ topt_seed topts)
-    runImprovingIO $ fmap (toPropertyResult seed) $ myCheck topts gen testable
+    runImprovingIO $ do
+        mb_result <- maybeTimeoutImprovingIO (unK (topt_timeout topts)) $ myCheck topts gen testable
+        return $ toPropertyResult seed $ case mb_result of
+            Nothing                  -> (PropertyTimedOut, Nothing)
+            Just (status, tests_run) -> (status, Just tests_run)
   where
-    toPropertyResult seed (status, tests_run) = PropertyResult {
+    toPropertyResult seed (status, mb_tests_run) = PropertyResult {
             pr_status = status,
             pr_used_seed = seed,
-            pr_tests_run = tests_run
+            pr_tests_run = mb_tests_run
         }
 
 myCheck :: (Testable a) => CompleteTestOptions -> StdGen -> a -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
