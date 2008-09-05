@@ -3,7 +3,7 @@ Controlled console update interval
 
 === Medium Priority ===
 Let people add their own TestOptions structures into their Test configuration
-Split providers into their own packages
 
 === Low Priority ===
 Report the number of tests run when a QuickCheck times out
+Split providers into their own packages
