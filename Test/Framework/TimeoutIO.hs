@@ -5,9 +5,6 @@ module Test.Framework.TimeoutIO (
 
 import Control.Concurrent
 import Control.Exception
-import Control.Monad
-
-import Data.Maybe
 
 import Prelude hiding (catch)
 
@@ -19,29 +16,27 @@ type Seconds = Int
 -- within that timespan, otherwise returns @Nothing@.
 timeoutIO :: Seconds -> IO a -> IO (Maybe a)
 timeoutIO seconds action = do
-    -- The "I have won" variable is used to ensure that at most one of the
-    -- two threads attempts to put something into the result variable
-    i_have_won_var <- newMVar ()
+    -- We create two threads which compete to write into this variable first,
+    -- and that is the value we return from this function
     result_var <- newEmptyMVar
     
     -- Right, spin off a thread to do the action and put it into the MVar
     thread_id <- forkIO $ do
         result <- action
-        mb_i_won <- tryTakeMVar i_have_won_var
-        -- If I won then just write a result: the other thread will die eventually
-        when (isJust mb_i_won) $ putMVar result_var (Just result)
+        -- Just try and write a result: the other thread will die eventually
+        tryPutMVar result_var (Just result)
+        return ()
     
     -- Start another thread that will kill the other one after an elapsed period. As
     -- a precaution we also fill the result_var if this thread throws an exception, so
     -- timeout is never blocked forever.
     forkIO $ flip catch (\exception -> putMVar result_var Nothing >> throwIO exception) $ do
         threadDelay (seconds * 1000000)
-        mb_i_won <- tryTakeMVar i_have_won_var
-        -- If I won then kill off the other guy if necessary and write a null result
-        when (isJust mb_i_won) $ do
-            killThread thread_id
-            putMVar result_var Nothing
+        -- Kill off the other guy (has no effect if already dead) and write a null result
+        killThread thread_id
+        tryPutMVar result_var Nothing
+        return ()
     
-    -- Extract the result from the variable: exactly one of the two threads above
-    -- should have won the race and written something into the variable
+    -- Extract the result from the variable: at least one of the two threads above
+    -- should win the race and write something into the variable
     takeMVar result_var

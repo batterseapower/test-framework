@@ -6,7 +6,7 @@ module Test.Framework.Improving (
 
 import Test.Framework.TimeoutIO
 
-import Control.Concurrent.Chan
+import Control.Concurrent
 import Control.Monad
 
 
@@ -30,7 +30,12 @@ instance Monad (ImprovingIO i f) where
                     unIIO (f a) chan
 
 yieldImprovement :: i -> ImprovingIO i f ()
-yieldImprovement improvement = IIO $ \chan -> writeChan chan (Left improvement)
+yieldImprovement improvement = IIO $ \chan -> do
+    -- Whenever we yield an improvement, take the opportunity to yield the thread as well.
+    -- The idea here is to introduce frequent yields in users so that if e.g. they get killed
+    -- by the timeout code then they know about it reasonably promptly.
+    yield
+    writeChan chan (Left improvement)
 
 runImprovingIO :: ImprovingIO i f f -> IO (i :~> f, IO ())
 runImprovingIO iio = do
