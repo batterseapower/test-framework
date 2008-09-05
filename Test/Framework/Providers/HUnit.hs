@@ -2,10 +2,7 @@ module Test.Framework.Providers.HUnit (
         testCase
     ) where
 
-import Test.Framework.Core
-import Test.Framework.Improving
-import Test.Framework.Options
-import Test.Framework.Utilities
+import Test.Framework.Providers.API
 
 import Test.HUnit.Lang
 

@@ -2,11 +2,7 @@ module Test.Framework.Providers.QuickCheck (
         testProperty
     ) where
 
-import Test.Framework.Core
-import Test.Framework.Improving
-import Test.Framework.Options
-import Test.Framework.Seed
-import Test.Framework.Utilities
+import Test.Framework.Providers.API
 
 import Test.QuickCheck hiding (Property)
 
