@@ -34,7 +34,7 @@ timeoutIO seconds action = do
     -- Start another thread that will kill the other one after an elapsed period. As
     -- a precaution we also fill the result_var if this thread throws an exception, so
     -- timeout is never blocked forever.
-    forkIO $ flip catch (const $ putMVar result_var Nothing) $ do
+    forkIO $ flip catch (\exception -> putMVar result_var Nothing >> throwIO exception) $ do
         threadDelay (seconds * 1000000)
         mb_i_won <- tryTakeMVar i_have_won_var
         -- If I won then kill off the other guy if necessary and write a null result
