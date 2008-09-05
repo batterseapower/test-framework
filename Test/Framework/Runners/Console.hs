@@ -5,12 +5,12 @@ module Test.Framework.Runners.Console (
 import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
-import Test.Framework.Processors
 import Test.Framework.Runners.Console.ProgressBar
 import Test.Framework.Runners.Console.Statistics
 import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
+import Test.Framework.Runners.Processors
 import Test.Framework.Seed
 import Test.Framework.Utilities
 

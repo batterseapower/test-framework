@@ -1,6 +1,6 @@
-module Test.Framework.Tests.ThreadPool (tests) where
+module Test.Framework.Tests.Runners.ThreadPool (tests) where
 
-import Test.Framework.ThreadPool
+import Test.Framework.Runners.ThreadPool
 
 import Test.HUnit
 

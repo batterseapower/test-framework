@@ -1,4 +1,4 @@
-module Test.Framework.Processors (
+module Test.Framework.Runners.Processors (
         processorCount
     ) where
 

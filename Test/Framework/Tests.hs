@@ -1,6 +1,6 @@
 module Main where
 
-import qualified Test.Framework.Tests.ThreadPool as TP
+import qualified Test.Framework.Tests.Runners.ThreadPool as TP
 
 import Test.HUnit
 --import Test.QuickCheck

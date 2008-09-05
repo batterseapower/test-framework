@@ -1,4 +1,4 @@
-module Test.Framework.ThreadPool (
+module Test.Framework.Runners.ThreadPool (
         executeOnPool
     ) where
 

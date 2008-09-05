@@ -5,10 +5,10 @@ module Test.Framework.Runners.Core (
 import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
-import Test.Framework.ThreadPool
 import Test.Framework.Utilities
 import Test.Framework.Runners.Options
 import Test.Framework.Runners.TestPattern
+import Test.Framework.Runners.ThreadPool
 
 import Control.Monad
 
