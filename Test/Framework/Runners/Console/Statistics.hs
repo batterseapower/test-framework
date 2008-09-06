@@ -1,9 +1,10 @@
 module Test.Framework.Runners.Console.Statistics (
         TestCount, adjustTestCount, testCountTotal,
-        TestStatistics(..), ts_pending_tests, ts_any_failures, initialTestStatistics, showFinalTestStatistics
+        TestStatistics(..), ts_pending_tests, ts_no_failures, initialTestStatistics, showFinalTestStatistics
     ) where
 
 import Test.Framework.Core (TestTypeName)
+import Test.Framework.Runners.Console.Colors
 import Test.Framework.Runners.Console.Table
 
 import Text.PrettyPrint.ANSI.Leijen
@@ -52,8 +53,8 @@ data TestStatistics = TestStatistics {
 ts_pending_tests :: TestStatistics -> TestCount
 ts_pending_tests ts = ts_total_tests ts `minusTestCount` ts_run_tests ts
 
-ts_any_failures :: TestStatistics -> Bool
-ts_any_failures ts = testCountTotal (ts_failed_tests ts) /= 0
+ts_no_failures :: TestStatistics -> Bool
+ts_no_failures ts = testCountTotal (ts_failed_tests ts) <= 0
 
 -- | Create some test statistics that simply records the total number of
 -- tests to be run, ready to be updated by the actual test runs.
@@ -78,12 +79,19 @@ showFinalTestStatistics ts = renderTable $ [Column label_column] ++ (map Column 
   where
     test_types = sort $ testCountTestTypes (ts_total_tests ts)
     
-    label_column      = [TextCell empty,              TextCell (text "Passed"),  TextCell (text "Failed"),  TextCell (text "Total")]
-    total_column      = [TextCell (text "Total"),     totalStat ts_passed_tests, totalStat ts_failed_tests, totalStat ts_total_tests]
-    test_type_columns = [ [TextCell (text test_type), test_stat ts_passed_tests, test_stat ts_failed_tests, test_stat ts_total_tests]
+    label_column      = [TextCell empty,              TextCell (text "Passed"),                        TextCell (text "Failed"),                  TextCell (text "Total")]
+    total_column      = [TextCell (text "Total"),     testStatusTotal colorPass ts_passed_tests,       testStatusTotal colorFail ts_failed_tests, testStatusTotal (colorPassOrFail (ts_no_failures ts)) ts_total_tests]
+    test_type_columns = [ [TextCell (text test_type), testStat colorPass (countTests ts_passed_tests), testStat colorFail failures,               testStat (colorPassOrFail (failures <= 0)) (countTests ts_total_tests)]
                         | test_type <- test_types
-                        , let test_stat = testTypeStat test_type ]
+                        , let countTests = testCountForType test_type . ($ ts)
+                              failures   = countTests ts_failed_tests ]
     
-    totalStat              = stat testCountTotal
-    testTypeStat test_type = stat (testCountForType test_type)
-    stat kind accessor     = TextCell (text $ show $ kind $ accessor ts)
+    testStatusTotal color status_accessor = TextCell (coloredNumber color (testCountTotal (status_accessor ts)))
+    testStat color number = TextCell (coloredNumber color number)
+
+coloredNumber :: (Doc -> Doc) -> Int -> Doc
+coloredNumber color number
+  | number == 0 = number_doc
+  | otherwise   = color number_doc
+  where
+    number_doc = text (show number)

@@ -44,6 +44,7 @@ Library
         
         Other-Modules:          Test.Framework.Core
                                 Test.Framework.Improving
+                                Test.Framework.Runners.Console.Colors
                                 Test.Framework.Runners.Console.ProgressBar
                                 Test.Framework.Runners.Console.Statistics
                                 Test.Framework.Runners.Console.Table

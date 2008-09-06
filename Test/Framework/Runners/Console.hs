@@ -5,6 +5,7 @@ module Test.Framework.Runners.Console (
 import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
+import Test.Framework.Runners.Console.Colors
 import Test.Framework.Runners.Console.ProgressBar
 import Test.Framework.Runners.Console.Statistics
 import Test.Framework.Runners.Console.Utilities
@@ -98,9 +99,9 @@ defaultMainWithOpts tests ropts = hideCursorIn $ do
     putDoc $ showFinalTestStatistics test_statistics'
     
     -- Set the error code depending on whether the tests succeded or not
-    exitWith $ if ts_any_failures test_statistics'
-               then ExitFailure 1
-               else ExitSuccess
+    exitWith $ if ts_no_failures test_statistics'
+               then ExitSuccess
+               else ExitFailure 1
 
 
 completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions
@@ -135,11 +136,11 @@ showRunTests indent_level = foldM (showRunTest indent_level)
 
 
 testStatisticsProgressBar :: TestStatistics -> Doc
-testStatisticsProgressBar test_statistics = showProgressBar (if any_failures then red else green) 80 (Progress run_tests total_tests)
+testStatisticsProgressBar test_statistics = showProgressBar (colorPassOrFail no_failures) 80 (Progress run_tests total_tests)
   where
-    run_tests    = testCountTotal (ts_run_tests test_statistics)
-    total_tests  = testCountTotal (ts_total_tests test_statistics)
-    any_failures = ts_any_failures test_statistics
+    run_tests   = testCountTotal (ts_run_tests test_statistics)
+    total_tests = testCountTotal (ts_total_tests test_statistics)
+    no_failures = ts_no_failures test_statistics
 
 updateTestStatistics :: (Int -> TestCount) -> Bool -> TestStatistics -> TestStatistics
 updateTestStatistics count_constructor test_suceeded test_statistics = test_statistics {
@@ -178,8 +179,8 @@ showImprovingTestResult' erase indent_level test_name _ (Finished result) = do
     return success
   where
     success = testSucceeded result
-    (result_doc, extra_doc) | success   = (brackets $ green (text (show result)), empty)
-                            | otherwise = (brackets (red (text "Failed")), text (show result) <> linebreak)
+    (result_doc, extra_doc) | success   = (brackets $ colorPass (text (show result)), empty)
+                            | otherwise = (brackets (colorFail (text "Failed")), text (show result) <> linebreak)
 showImprovingTestResult' erase indent_level test_name progress_bar (Improving intermediate rest) = do
     erase
     putTestHeader indent_level test_name (brackets (text intermediate_str))
