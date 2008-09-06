@@ -4,16 +4,18 @@ module Test.Framework.Runners.Console.Table (
 
 import Test.Framework.Utilities
 
+import Text.PrettyPrint.ANSI.Leijen hiding (column)
 
-data Cell = Text String
-          | Seperator
+
+data Cell = TextCell Doc
+          | SeperatorCell
 
 data Column = Column [Cell]
             | SeperatorColumn
 
 type ColumnWidth = Int
 
-renderTable :: [Column] -> String
+renderTable :: [Column] -> Doc
 renderTable = renderColumnsWithWidth . map (\column -> (findColumnWidth column, column))
 
 
@@ -22,19 +24,19 @@ findColumnWidth SeperatorColumn = 0
 findColumnWidth (Column cells)  = maximum (map findCellWidth cells)
 
 findCellWidth :: Cell -> Int
-findCellWidth (Text s)  = length s
-findCellWidth Seperator = 0
+findCellWidth (TextCell doc) = maximum (0 : map length (lines (shows doc "")))
+findCellWidth SeperatorCell  = 0
 
 
-renderColumnsWithWidth :: [(ColumnWidth, Column)] -> String
+renderColumnsWithWidth :: [(ColumnWidth, Column)] -> Doc
 renderColumnsWithWidth columns
   | all (columnFinished . snd) columns
-  = ""
+  = empty
   | otherwise
-  = first_cells_str ++ "\n" ++
+  = first_cells_str <> line <>
     renderColumnsWithWidth (map (onRight columnDropHead) columns)
   where
-    first_cells_str = concat $ zipWith (uncurry renderFirstColumnCell) columns (eitherSideSeperator (map snd columns))
+    first_cells_str = hcat $ zipWith (uncurry renderFirstColumnCell) columns (eitherSideSeperator (map snd columns))
 
 
 eitherSideSeperator :: [Column] -> [Bool]
@@ -49,17 +51,17 @@ isSeperatorColumn (Column cells)  = case cells of
     (cell:_) -> isSeperatorCell cell
 
 isSeperatorCell :: Cell -> Bool
-isSeperatorCell Seperator = True
-isSeperatorCell _         = False
+isSeperatorCell SeperatorCell = True
+isSeperatorCell _             = False
 
 
-renderFirstColumnCell :: ColumnWidth -> Column -> Bool -> String
+renderFirstColumnCell :: ColumnWidth -> Column -> Bool -> Doc
 renderFirstColumnCell column_width (Column cells) _ = case cells of
-    []                -> replicate (column_width + 2) ' '
-    (Seperator:_)     -> replicate (column_width + 2) '-'
-    (Text contents:_) -> " " ++ padRight column_width contents ++ " "
+    []                    -> text $ replicate (column_width + 2) ' '
+    (SeperatorCell:_)     -> text $ replicate (column_width + 2) '-'
+    (TextCell contents:_) -> char ' ' <> fill column_width contents <> char ' '
 renderFirstColumnCell _ SeperatorColumn either_side_seperator 
-  = if either_side_seperator then "+" else "|"
+  = if either_side_seperator then char '+' else char '|'
 
 columnFinished :: Column -> Bool
 columnFinished (Column cells)  = null cells

@@ -6,6 +6,8 @@ module Test.Framework.Runners.Console.Statistics (
 import Test.Framework.Core (TestTypeName)
 import Test.Framework.Runners.Console.Table
 
+import Text.PrettyPrint.ANSI.Leijen
+
 import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -66,24 +68,22 @@ initialTestStatistics total_tests = TestStatistics {
 -- | Displays statistics as a string something like this:
 --
 -- @
---        | Properties | Total
--- -------+------------+------
--- Passed | 9          | 9
--- Failed | 1          | 1
--- -------+------------+------
--- Total  | 10         | 10
+--        Properties Total
+-- Passed 9          9
+-- Failed 1          1
+-- Total  10         10
 -- @
-showFinalTestStatistics :: TestStatistics -> String
-showFinalTestStatistics ts = renderTable $ [Column label_column, SeperatorColumn] ++ (map Column test_type_columns) ++ [SeperatorColumn, Column total_column]
+showFinalTestStatistics :: TestStatistics -> Doc
+showFinalTestStatistics ts = renderTable $ [Column label_column] ++ (map Column test_type_columns) ++ [Column total_column]
   where
     test_types = sort $ testCountTestTypes (ts_total_tests ts)
     
-    label_column      = [Text "",           Seperator, Text "Passed",                Text "Failed",                Seperator, Text "Total"]
-    test_type_columns = [ [Text test_type, Seperator, test_stat ts_passed_tests, test_stat ts_failed_tests, Seperator, test_stat ts_total_tests]
+    label_column      = [TextCell empty,              TextCell (text "Passed"),  TextCell (text "Failed"),  TextCell (text "Total")]
+    total_column      = [TextCell (text "Total"),     totalStat ts_passed_tests, totalStat ts_failed_tests, totalStat ts_total_tests]
+    test_type_columns = [ [TextCell (text test_type), test_stat ts_passed_tests, test_stat ts_failed_tests, test_stat ts_total_tests]
                         | test_type <- test_types
                         , let test_stat = testTypeStat test_type ]
-    total_column      = [Text "Total",      Seperator, totalStat ts_passed_tests,    totalStat ts_failed_tests,    Seperator, totalStat ts_total_tests]
     
     totalStat              = stat testCountTotal
     testTypeStat test_type = stat (testCountForType test_type)
-    stat kind accessor     = Text (show $ kind $ accessor ts)
+    stat kind accessor     = TextCell (text $ show $ kind $ accessor ts)

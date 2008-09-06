@@ -95,7 +95,7 @@ defaultMainWithOpts tests ropts = hideCursorIn $ do
     
     -- Show the final statistics
     putStrLn ""
-    putStr $ showFinalTestStatistics test_statistics'
+    putDoc $ showFinalTestStatistics test_statistics'
     
     -- Set the error code depending on whether the tests succeded or not
     exitWith $ if ts_any_failures test_statistics'
