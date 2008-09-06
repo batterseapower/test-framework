@@ -6,7 +6,7 @@ module Test.Framework (
         module Test.Framework.Seed
     ) where
 
-import Test.Framework.Core (TestName, testGroup, plusTestOptions)
+import Test.Framework.Core (Test, TestName, testGroup, plusTestOptions)
 import Test.Framework.Options
 import Test.Framework.Runners.Console
 import Test.Framework.Runners.Options
