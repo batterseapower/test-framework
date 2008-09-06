@@ -8,7 +8,7 @@ Description:         Allows QuickCheck properties and HUnit test cases to be ass
                      All of this comes with colored test output, progress reporting and test statistics output.
 License:             BSD3
 License-File:        LICENSE
-Extra-Source-Files:  README
+Extra-Source-Files:  README.textile
 Author:              Max Bolingbroke
 Maintainer:          batterseapower@hotmail.com
 Homepage:            http://github.com/batterseapower/test-framework
