@@ -86,7 +86,7 @@ The test-selection syntax for use with the @-s@ command line option is based on 
 A test will be run if it matches __any__ of the patterns supplied with @-s@.
 
 
-h2. Links
+h2. Linkage
 
 * "Hackage":http://hackage.haskell.org/cgi-bin/hackage-scripts/package/test-framework/
 * "Bug Tracker":http://bsp.lighthouseapp.com/projects/15661-hs-test-framework
