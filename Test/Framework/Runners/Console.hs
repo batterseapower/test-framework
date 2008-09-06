@@ -31,8 +31,24 @@ import Data.Monoid
 import Control.Monad
 
 
-optionsDescription :: [OptDescr RunnerOptions]
+instance Functor OptDescr where
+    fmap f (Option a b arg_descr c) = Option a b (fmap f arg_descr) c
+
+instance Functor ArgDescr where
+    fmap f (NoArg a) = NoArg (f a)
+    fmap f (ReqArg g s) = ReqArg (f . g) s
+    fmap f (OptArg g s) = OptArg (f . g) s
+
+-- | @Nothing@ signifies that usage information should be displayed.
+-- @Just@ simply gives us the contribution to overall options by the command line option.
+type SuppliedRunnerOptions = Maybe RunnerOptions
+
+optionsDescription :: [OptDescr SuppliedRunnerOptions]
 optionsDescription = [
+        Option [] ["help"]
+            (NoArg Nothing)
+            "show this help message"
+    ] ++ map (fmap Just) [
         Option ['j'] ["threads"]
             (ReqArg (\t -> mempty { ropt_threads = Just (read t) }) "NUMBER")
             "number of threads to use to run tests",
@@ -52,7 +68,7 @@ optionsDescription = [
             (NoArg (mempty { ropt_test_options = Just (mempty { topt_timeout = Just Nothing }) }))
             "specifies that tests should be run without a timeout, by default",
         Option ['t'] ["select-tests"]
-            (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "[!]((TEST_OR_CATEGORY_NAME | * | **) [/])+")
+            (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "TEST-PATTERN")
             "only tests that match at least one glob pattern given by an instance of this argument will be run"
     ]
 
@@ -62,8 +78,8 @@ interpretArgs args = do
     let usage_header = "Usage: " ++ prog_name ++ " [OPTIONS]"
     
     case getOpt Permute optionsDescription args of
-        (o, n, [])   -> return $ Right (mconcat o, n)
-        (_, _, errs) -> return $ Left (concat errs ++ usageInfo usage_header optionsDescription)
+        (oas, n, []) | Just os <- sequence oas -> return $ Right (mconcat os, n)
+        (_, _, errs)                           -> return $ Left (concat errs ++ usageInfo usage_header optionsDescription)
 
 
 defaultMain :: [Test] -> IO ()
