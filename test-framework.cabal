@@ -1,17 +1,18 @@
-Name:           test-framework
-Version:        0.1
-Cabal-Version:  >= 1.2
-Category:       Testing
-Synopsis:       Framework for running and organising tests, with HUnit and QuickCheck support
-Description:    Allows QuickCheck properties and HUnit test cases to be assembled into test groups, run in parallel (but reported
-                in deterministic order, to aid diff interpretation) and filtered and controlled by command line options.
-                All of this comes with colored test output, progress reporting and test statistics output.
-License:        BSD3
-License-File:   LICENSE
-Author:         Max Bolingbroke
-Maintainer:     batterseapower@hotmail.com
-Homepage:       http://wiki.omega-prime.co.uk/doku.php/projects/haskell/test-framework
-Build-Type:     Simple
+Name:                test-framework
+Version:             0.1
+Cabal-Version:       >= 1.2
+Category:            Testing
+Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
+Description:         Allows QuickCheck properties and HUnit test cases to be assembled into test groups, run in parallel (but reported
+                     in deterministic order, to aid diff interpretation) and filtered and controlled by command line options.
+                     All of this comes with colored test output, progress reporting and test statistics output.
+License:             BSD3
+License-File:        LICENSE
+Extra-Source-Files:  README
+Author:              Max Bolingbroke
+Maintainer:          batterseapower@hotmail.com
+Homepage:            http://github.com/batterseapower/test-framework
+Build-Type:          Simple
 
 Flag SplitBase
         Description:    Choose the new smaller, split-up base package
