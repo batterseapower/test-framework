@@ -5,15 +5,17 @@ module Test.Framework.Runners.Core (
 import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
-import Test.Framework.Utilities
 import Test.Framework.Runners.Options
 import Test.Framework.Runners.TestPattern
 import Test.Framework.Runners.ThreadPool
+import Test.Framework.Seed
+import Test.Framework.Utilities
 
 import Control.Monad
 
 import Data.List
 import Data.Maybe
+import Data.Monoid
 
 
 -- | A test that has been executed
@@ -44,13 +46,25 @@ filterTest patterns path (TestGroup name tests)
   | otherwise   = Just (TestGroup name tests')
   where
     tests' = filterTests patterns (path ++ [name]) tests
+filterTest patterns path (PlusTestOptions topts inner_test)
+  = fmap (PlusTestOptions topts) (filterTest patterns path inner_test)
 
 
-runTest' :: CompleteTestOptions -> Test -> IO (RunTest, [IO ()])
+runTest' :: TestOptions -> Test -> IO (RunTest, [IO ()])
 runTest' topts (Test name testlike) = do
-    (result, action) <- runTest topts testlike
+    (result, action) <- runTest (completeTestOptions topts) testlike
     return (RunTest name (testTypeName testlike) result, [action])
 runTest' topts (TestGroup name tests) = fmap (onLeft (RunTestGroup name)) $ runTests' topts tests
+runTest' topts (PlusTestOptions extra_topts test) = runTest' (topts `mappend` extra_topts) test
 
-runTests' :: CompleteTestOptions -> [Test] -> IO ([RunTest], [IO ()])
+runTests' :: TestOptions -> [Test] -> IO ([RunTest], [IO ()])
 runTests' topts = fmap (onRight concat . unzip) . mapM (runTest' topts)
+
+
+completeTestOptions :: TestOptions -> CompleteTestOptions
+completeTestOptions to = TestOptions {
+            topt_seed = K $ topt_seed to `orElse` RandomSeed,
+            topt_maximum_generated_tests = K $ topt_maximum_generated_tests to `orElse` 100,
+            topt_maximum_unsuitable_generated_tests = K $ topt_maximum_unsuitable_generated_tests to `orElse` 1000,
+            topt_timeout = K $ topt_timeout to `orElse` Nothing
+        }

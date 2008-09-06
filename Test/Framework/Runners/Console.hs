@@ -106,16 +106,8 @@ defaultMainWithOpts tests ropts = hideCursorIn $ do
 completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions
 completeRunnerOptions ro = RunnerOptions {
             ropt_threads = K $ ropt_threads ro `orElse` processorCount,
-            ropt_test_options = K $ completeTestOptions (ropt_test_options ro `orElse` mempty),
+            ropt_test_options = K $ ropt_test_options ro `orElse` mempty,
             ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty
-        }
-
-completeTestOptions :: TestOptions -> CompleteTestOptions
-completeTestOptions to = TestOptions {
-            topt_seed = K $ topt_seed to `orElse` RandomSeed,
-            topt_maximum_generated_tests = K $ topt_maximum_generated_tests to `orElse` 100,
-            topt_maximum_unsuitable_generated_tests = K $ topt_maximum_unsuitable_generated_tests to `orElse` 1000,
-            topt_timeout = K $ topt_timeout to `orElse` Nothing
         }
 
 

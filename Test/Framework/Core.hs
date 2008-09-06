@@ -3,6 +3,7 @@ module Test.Framework.Core where
 import Test.Framework.Improving
 import Test.Framework.Options
 
+
 -- | Something like the result of a test: works in concert with 'Testlike'
 class (Show i, Show r) => TestResultlike i r | r -> i where
     testSucceeded :: r -> Bool
@@ -22,6 +23,10 @@ type TestTypeName = String
 -- | Main test data type: build up a list of tests to be run with this.
 data Test = forall i r t. Testlike i r t => Test TestName t
           | TestGroup TestName [Test]
+          | PlusTestOptions TestOptions Test
 
 testGroup :: TestName -> [Test] -> Test
 testGroup = TestGroup
+
+plusTestOptions :: TestOptions -> Test -> Test
+plusTestOptions = PlusTestOptions

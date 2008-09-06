@@ -11,7 +11,7 @@ type RunnerOptions = RunnerOptions' Maybe
 type CompleteRunnerOptions = RunnerOptions' K
 data RunnerOptions' f = RunnerOptions {
         ropt_threads :: f Int,
-        ropt_test_options :: f (TestOptions' f),
+        ropt_test_options :: f TestOptions,
         ropt_test_patterns :: f [TestPattern]
     }
 
