@@ -7,6 +7,9 @@ import Data.Monoid
 newtype K a = K { unK :: a }
 
 
+listToMaybeLast :: [a] -> Maybe a
+listToMaybeLast = listToMaybe . reverse
+
 mappendBy :: Monoid b => (a -> b) -> a -> a -> b
 mappendBy f left right = (f left) `mappend` (f right)
 

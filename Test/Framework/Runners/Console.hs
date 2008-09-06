@@ -11,6 +11,7 @@ import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Runners.Processors
+import Test.Framework.Runners.TimedConsumption
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
@@ -156,8 +157,23 @@ updateTestStatistics count_constructor test_suceeded test_statistics = test_stat
     }
 
 
+consumeImprovingThing :: (a :~> b) -> [(a :~> b)]
+consumeImprovingThing improving@(Finished _)       = [improving]
+consumeImprovingThing improving@(Improving _ rest) = improving : consumeImprovingThing rest
+
+
 showImprovingTestResult :: TestResultlike i r => IO () -> Int -> String -> Doc -> (i :~> r) -> IO Bool
-showImprovingTestResult erase indent_level test_name _ (Finished result) = do
+showImprovingTestResult erase indent_level test_name progress_bar improving = do
+    -- Update the screen every every 200ms
+    improving_list <- consumeListInInterval 200000 (consumeImprovingThing improving)
+    case listToMaybeLast improving_list of
+        Nothing         -> do -- 200ms was somehow not long enough for a single result to arrive: try again!
+            showImprovingTestResult erase indent_level test_name progress_bar improving
+        Just improving' -> do -- Display that new improving value to the user
+            showImprovingTestResult' erase indent_level test_name progress_bar improving'
+
+showImprovingTestResult' :: TestResultlike i r => IO () -> Int -> String -> Doc -> (i :~> r) -> IO Bool
+showImprovingTestResult' erase indent_level test_name _ (Finished result) = do
     erase
     -- Output the final test status and a trailing newline
     putTestHeader indent_level test_name result_doc
@@ -172,7 +188,7 @@ showImprovingTestResult erase indent_level test_name _ (Finished result) = do
     success = testSucceeded result
     (result_doc, extra_doc) | success   = (brackets $ green (text (show result)), empty)
                             | otherwise = (brackets (red (text "Failed")), text (show result) <> linebreak)
-showImprovingTestResult erase indent_level test_name progress_bar (Improving intermediate rest) = do
+showImprovingTestResult' erase indent_level test_name progress_bar (Improving intermediate rest) = do
     erase
     putTestHeader indent_level test_name (brackets (text intermediate_str))
     putDoc progress_bar

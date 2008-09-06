@@ -52,6 +52,7 @@ Library
                                 Test.Framework.Runners.Processors
                                 Test.Framework.Runners.TestPattern
                                 Test.Framework.Runners.ThreadPool
+                                Test.Framework.Runners.TimedConsumption
                                 Test.Framework.TimeoutIO
                                 Test.Framework.Utilities
         
