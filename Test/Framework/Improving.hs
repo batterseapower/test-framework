@@ -4,10 +4,10 @@ module Test.Framework.Improving (
         timeoutImprovingIO, maybeTimeoutImprovingIO
     ) where
 
-import Test.Framework.TimeoutIO
-
 import Control.Concurrent
 import Control.Monad
+
+import System.Timeout
 
 
 data i :~> f = Finished f
@@ -54,9 +54,13 @@ reifyListToImproving []                      = error "reifyListToImproving: list
 liftIO :: IO a -> ImprovingIO i f a
 liftIO io = IIO $ const io
 
-timeoutImprovingIO :: Seconds -> ImprovingIO i f a -> ImprovingIO i f (Maybe a)
-timeoutImprovingIO seconds iio = IIO $ \chan -> timeoutIO seconds $ unIIO iio chan
+-- | Given a number of microseconds and an improving IO action, run that improving IO action only
+-- for at most the given period before giving up. See also 'System.Timeout.timeout'.
+timeoutImprovingIO :: Int -> ImprovingIO i f a -> ImprovingIO i f (Maybe a)
+timeoutImprovingIO microseconds iio = IIO $ \chan -> timeout microseconds $ unIIO iio chan
 
-maybeTimeoutImprovingIO :: Maybe Seconds -> ImprovingIO i f a -> ImprovingIO i f (Maybe a)
-maybeTimeoutImprovingIO Nothing        = fmap Just
-maybeTimeoutImprovingIO (Just timeout) = timeoutImprovingIO timeout
+-- | As 'timeoutImprovingIO', but don't bother applying a timeout to the action if @Nothing@ is given
+-- as the number of microseconds to apply the time out for.
+maybeTimeoutImprovingIO :: Maybe Int -> ImprovingIO i f a -> ImprovingIO i f (Maybe a)
+maybeTimeoutImprovingIO Nothing             = fmap Just
+maybeTimeoutImprovingIO (Just microseconds) = timeoutImprovingIO microseconds

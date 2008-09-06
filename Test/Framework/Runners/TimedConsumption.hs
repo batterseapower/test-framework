@@ -2,6 +2,8 @@ module Test.Framework.Runners.TimedConsumption (
         consumeListInInterval
     ) where
 
+import Test.Framework.Utilities
+
 import System.CPUTime
 
 
@@ -17,7 +19,7 @@ import System.CPUTime
 consumeListInInterval :: Int -> [a] -> IO [a]
 consumeListInInterval delay list = do
     initial_time_ps <- getCPUTime
-    go initial_time_ps (fromIntegral delay * 1000000) list
+    go initial_time_ps (microsecondsToPicoseconds (fromIntegral delay)) list
   where
     go _               _        []     = return []
     go initial_time_ps delay_ps (x:xs) = do

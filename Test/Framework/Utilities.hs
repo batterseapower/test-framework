@@ -7,6 +7,12 @@ import Data.Monoid
 newtype K a = K { unK :: a }
 
 
+secondsToMicroseconds :: Num a => a -> a
+secondsToMicroseconds = (1000000*)
+
+microsecondsToPicoseconds :: Num a => a -> a
+microsecondsToPicoseconds = (1000000*)
+
 listToMaybeLast :: [a] -> Maybe a
 listToMaybeLast = listToMaybe . reverse
 

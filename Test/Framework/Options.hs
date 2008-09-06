@@ -1,7 +1,6 @@
 module Test.Framework.Options where
 
 import Test.Framework.Seed
-import Test.Framework.TimeoutIO
 import Test.Framework.Utilities
 
 import Data.Monoid
@@ -11,9 +10,13 @@ type TestOptions = TestOptions' Maybe
 type CompleteTestOptions = TestOptions' K
 data TestOptions' f = TestOptions {
         topt_seed :: f Seed,
+        -- ^ Seed that should be used to create random numbers for generated tests
         topt_maximum_generated_tests :: f Int,
+        -- ^ Maximum number of tests to generate when using something like QuickCheck
         topt_maximum_unsuitable_generated_tests :: f Int,
-        topt_timeout :: f (Maybe Seconds)
+        -- ^ Maximum number of unsuitable tests to consider before giving up when using something like QuickCheck
+        topt_timeout :: f (Maybe Int)
+        -- ^ The number of microseconds to run tests for before considering them a failure
     }
 
 instance Monoid (TestOptions' Maybe) where

@@ -11,7 +11,6 @@ module Test.Framework.Providers.API (
         module Test.Framework.Improving,
         module Test.Framework.Options,
         module Test.Framework.Seed,
-        module Test.Framework.TimeoutIO,
         module Test.Framework.Utilities
     ) where
 
@@ -19,5 +18,4 @@ import Test.Framework.Core
 import Test.Framework.Improving
 import Test.Framework.Options
 import Test.Framework.Seed
-import Test.Framework.TimeoutIO
 import Test.Framework.Utilities

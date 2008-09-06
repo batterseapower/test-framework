@@ -45,8 +45,8 @@ optionsDescription = [
             (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_maximum_unsuitable_generated_tests = Just (read t) }) }) "NUMBER")
             "how many unsuitable candidate tests something like QuickCheck should endure before giving up, by default",
         Option ['o'] ["timeout"]
-            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_timeout = Just (Just (read t)) }) }) "NUMBER")
-            "how long a test should be run for before giving up, by default",
+            (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_timeout = Just (Just (secondsToMicroseconds (read t))) }) }) "NUMBER")
+            "how many seconds a test should be run for before giving up, by default",
         Option [] ["no-timeout"]
             (NoArg (mempty { ropt_test_options = Just (mempty { topt_timeout = Just Nothing }) }))
             "specifies that tests should be run without a timeout, by default",
