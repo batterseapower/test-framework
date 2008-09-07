@@ -1,5 +1,5 @@
 Name:                test-framework
-Version:             0.1.1
+Version:             0.1.2
 Cabal-Version:       >= 1.2
 Category:            Testing
 Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
@@ -65,7 +65,7 @@ Library
                 Build-Depends:          HUnit >= 1.2
                 Exposed-Modules:        Test.Framework.Providers.HUnit
         
-        Build-Depends:          ansi-terminal >= 0.3.1, ansi-wl-pprint >= 0.3.1, regex-posix >= 0.72
+        Build-Depends:          ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -89,7 +89,7 @@ Library
 Executable test-framework-tests
         Main-Is:                Test/Framework/Tests.hs
 
-        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.3.1, ansi-wl-pprint >= 0.3.1, regex-posix >= 0.72
+        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -116,7 +116,7 @@ Executable test-framework-tests
 Executable test-framework-example
         Main-Is:                Test/Framework/Example.lhs
 
-        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.3.1, ansi-wl-pprint >= 0.3.1, regex-posix >= 0.72
+        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
         else
