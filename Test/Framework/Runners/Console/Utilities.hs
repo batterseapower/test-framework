@@ -9,7 +9,5 @@ import Control.Exception
 import Prelude hiding (catch)
 
 
-hideCursorIn :: IO () -> IO ()
-hideCursorIn action = do
-    hideCursor
-    catch (action >> showCursor) (\exception -> showCursor >> throwIO exception)
+hideCursorIn :: IO a -> IO a
+hideCursorIn action = bracket hideCursor (const showCursor) (const action)
