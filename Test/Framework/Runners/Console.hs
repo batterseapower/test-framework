@@ -100,7 +100,7 @@ defaultMainWithArgs tests args = do
             exitWith (ExitFailure 1)
 
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
-defaultMainWithOpts tests ropts = hideCursorIn $ do
+defaultMainWithOpts tests ropts = hideCursorDuring $ do
     let ropts' = completeRunnerOptions ropts
     
     -- Get a lazy list of the test results, as executed in parallel
