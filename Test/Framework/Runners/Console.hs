@@ -206,7 +206,7 @@ showImprovingTestResult' erase indent_level test_name progress_bar (Improving in
     putTestHeader indent_level test_name (brackets (text intermediate_str))
     putDoc progress_bar
     hFlush stdout
-    showImprovingTestResult (previousLine 1 >> clearLine) indent_level test_name progress_bar rest
+    showImprovingTestResult (cursorUpLine 1 >> clearLine) indent_level test_name progress_bar rest
   where  
     intermediate_str = show intermediate
 
