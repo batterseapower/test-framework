@@ -3,5 +3,6 @@
 === Medium Priority ===
 
 === Low Priority ===
-Report the number of tests run when a QuickCheck times out
-Split providers into their own packages
+* Report the number of tests run when a QuickCheck times out
+* Split providers into their own packages
+* Make the cursor un-hide when Ctrl-C is used to exit the program: may involve something like myThreadId >>= \main_thread -> installHandler sigINT (Catch (throwTo main_thread $ ExitException $ ExitFailure 1)) Nothing
