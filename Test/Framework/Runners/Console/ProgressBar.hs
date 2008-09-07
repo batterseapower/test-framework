@@ -1,5 +1,5 @@
 module Test.Framework.Runners.Console.ProgressBar (
-        Progress(..), showProgressBar
+        Progress(..), progressBar
     ) where
 
 import Text.PrettyPrint.ANSI.Leijen hiding (width)
@@ -7,8 +7,8 @@ import Text.PrettyPrint.ANSI.Leijen hiding (width)
 
 data Progress = Progress Int Int
 
-showProgressBar :: (Doc -> Doc) -> Int -> Progress -> Doc
-showProgressBar color width (Progress count total) = char '[' <> progress_doc <> space_doc <> char ']'
+progressBar :: (Doc -> Doc) -> Int -> Progress -> Doc
+progressBar color width (Progress count total) = char '[' <> progress_doc <> space_doc <> char ']'
   where
     -- The available width takes account of the enclosing brackets
     available_width = width - 2
