@@ -10,7 +10,7 @@ if [ "$version_response" != "yes" ]; then
 fi
 
 
-declare -a subdirectories=( core example hunit quickcheck )
+declare -a subdirectories=( core hunit quickcheck )
 declare -a filenames
 
 index=0
