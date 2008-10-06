@@ -1,11 +1,11 @@
 Name:                test-framework
-Version:             0.1.2
+Version:             0.2.0
 Cabal-Version:       >= 1.2
 Category:            Testing
 Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
-Description:         Allows QuickCheck properties and HUnit test cases to be assembled into test groups, run in parallel (but reported
-                     in deterministic order, to aid diff interpretation) and filtered and controlled by command line options.
-                     All of this comes with colored test output, progress reporting and test statistics output.
+Description:         Allows tests such as QuickCheck properties and HUnit test cases to be assembled into test groups, run in
+                     parallel (but reported in deterministic order, to aid diff interpretation) and filtered and controlled by
+                     command line options. All of this comes with colored test output, progress reporting and test statistics output.
 License:             BSD3
 License-File:        LICENSE
 Extra-Source-Files:  README.textile
@@ -21,18 +21,6 @@ Flag SplitBase
 Flag Tests
         Description:    Build the tests
         Default:        False
-
-Flag Example
-        Description:    Build the example testsuite
-        Default:        False
-
-Flag HUnit
-        Description:    Enable HUnit integration: disabling this is not recommended, as it changes the package API
-        Default:        True
-
-Flag QuickCheck
-        Description:    Enable QuickCheck integration: disabling this is not recommended, as it changes the package API
-        Default:        True
 
 
 Library
@@ -56,14 +44,6 @@ Library
                                 Test.Framework.Runners.ThreadPool
                                 Test.Framework.Runners.TimedConsumption
                                 Test.Framework.Utilities
-        
-        if flag(quickcheck)
-                Build-Depends:          QuickCheck >= 1.1
-                Exposed-Modules:        Test.Framework.Providers.QuickCheck
-        
-        if flag(hunit)
-                Build-Depends:          HUnit >= 1.2
-                Exposed-Modules:        Test.Framework.Providers.HUnit
         
         Build-Depends:          ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
@@ -89,7 +69,7 @@ Library
 Executable test-framework-tests
         Main-Is:                Test/Framework/Tests.hs
 
-        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
+        Build-Depends:          HUnit >= 1.2, ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
                 Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
         else
@@ -111,31 +91,4 @@ Executable test-framework-tests
                 Cpp-Options:            -DCOMPILER_GHC
         
         if !flag(tests)
-                Buildable:              False
-
-Executable test-framework-example
-        Main-Is:                Test/Framework/Example.lhs
-
-        Build-Depends:          QuickCheck >= 1.1, HUnit >= 1.2, ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
-        if flag(splitBase)
-                Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
-        else
-                Build-Depends:          base < 3
-        
-        Extensions:             CPP
-                                PatternGuards
-                                ExistentialQuantification
-                                RecursiveDo
-                                FlexibleInstances
-                                TypeSynonymInstances
-                                TypeOperators
-                                FunctionalDependencies
-                                MultiParamTypeClasses
-        
-        Ghc-Options:            -threaded
-        
-        if impl(ghc)
-                Cpp-Options:            -DCOMPILER_GHC
-        
-        if !flag(example)
                 Buildable:              False

@@ -1,0 +1,31 @@
+Name:                test-framework-hunit
+Version:             0.2.0
+Cabal-Version:       >= 1.2
+Category:            Testing
+Synopsis:            HUnit support for the test-framework package.
+License:             BSD3
+License-File:        LICENSE
+Extra-Source-Files:  README.textile
+Author:              Max Bolingbroke
+Maintainer:          batterseapower@hotmail.com
+Homepage:            http://github.com/batterseapower/test-framework
+Build-Type:          Simple
+
+Flag SplitBase
+        Description:    Choose the new smaller, split-up base package
+        Default:        True
+
+
+Library
+        Exposed-Modules:        Test.Framework.Providers.HUnit
+        
+        Build-Depends:          test-framework >= 0.2.0, HUnit >= 1.2 && < 2
+        if flag(splitBase)
+                Build-Depends:          base >= 3
+        else
+                Build-Depends:          base < 3
+        
+        Extensions:             TypeOperators
+                                MultiParamTypeClasses
+        
+        Ghc-Options:            -Wall

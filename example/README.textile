@@ -1,0 +1,3 @@
+h1. Test Framework Example Testsuite
+
+For more information, please see the latest version of the test-framework package README. This can be found at the "GitHub wiki":http://github.com/batterseapower/test-framework/wikis/readme.
