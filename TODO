@@ -1,6 +1,7 @@
 === High Priority ===
 
 === Medium Priority ===
+* QuickCheck2 provider
 
 === Low Priority ===
 * Report the number of tests run when a QuickCheck times out
