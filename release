@@ -11,11 +11,11 @@ fi
 
 
 # Not 'example' as well because we don't really want to upload a simple example package to Hackage.
-declare -a subdirectories=( core hunit quickcheck )
+declare -a subdirectories=(core hunit quickcheck)
 declare -a filenames
 
 index=0
-while [ "$index" -lt "${#subdirectories}" ]; do
+while [ "$index" -lt "${#subdirectories[@]}" ]; do
     # Find out the working subdirectory and enter it
     subdirectory=${subdirectories[index]}
     cd $subdirectory
@@ -75,7 +75,7 @@ fi
 
 
 index=0
-while [ "$index" -lt "${#filenames}" ]; do
+while [ "$index" -lt "${#filenames[@]}" ]; do
     # You need to have stored your Hackage username and password as directed by cabal-upload
     # I use -v5 because otherwise the error messages can be cryptic :-)
     filename=${filenames[index]}
