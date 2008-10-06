@@ -10,6 +10,7 @@ if [ "$version_response" != "yes" ]; then
 fi
 
 
+# Not 'example' as well because we don't really want to upload a simple example package to Hackage.
 declare -a subdirectories=( core hunit quickcheck )
 declare -a filenames
 
