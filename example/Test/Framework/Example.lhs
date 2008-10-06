@@ -1,6 +1,6 @@
 == RUNNING ==
 
-ghc -package test-framework -threaded Example.lhs -o Example
+ghc -package test-framework -package test-framework-quickcheck -package test-framework-hunit -threaded Example.lhs -o Example
 ./Example --maximum-generated-tests=5000 +RTS -N2
 
 
