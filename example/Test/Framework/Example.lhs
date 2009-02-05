@@ -46,9 +46,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 \begin{code}
 
-import Test.Framework
+import Test.Framework (defaultMain, testGroup)
 import Test.Framework.Providers.HUnit
-import Test.Framework.Providers.QuickCheck
+import Test.Framework.Providers.QuickCheck (testProperty)
 
 import Test.QuickCheck
 import Test.HUnit
