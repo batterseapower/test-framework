@@ -1,0 +1,33 @@
+Name:                test-framework-quickcheck2
+Version:             0.2.0
+Cabal-Version:       >= 1.2
+Category:            Testing
+Synopsis:            QuickCheck2 support for the test-framework package.
+License:             BSD3
+License-File:        LICENSE
+Extra-Source-Files:  README.textile
+Author:              Max Bolingbroke
+Maintainer:          batterseapower@hotmail.com
+Homepage:            http://github.com/batterseapower/test-framework
+Build-Type:          Simple
+
+Flag SplitBase
+        Description:    Choose the new smaller, split-up base package
+        Default:        True
+
+
+Library
+        Exposed-Modules:        Test.Framework.Providers.QuickCheck2
+        
+        Build-Depends:          test-framework >= 0.2.0, QuickCheck >= 2.1.0.0
+        if flag(splitBase)
+                Build-Depends:          base >= 3, random >= 1
+        else
+                Build-Depends:          base < 3
+        
+        Extensions:             TypeSynonymInstances
+                                TypeOperators
+                                MultiParamTypeClasses
+                                ExistentialQuantification
+        
+        Ghc-Options:            -Wall
