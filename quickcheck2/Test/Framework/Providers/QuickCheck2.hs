@@ -5,8 +5,8 @@ module Test.Framework.Providers.QuickCheck2 (
 import Test.Framework.Providers.API
 
 import Test.QuickCheck.Gen
-import Test.QuickCheck.Property hiding (Property)
-import Test.QuickCheck.Test hiding (reason)
+import Test.QuickCheck.Property hiding ( Property )
+import Test.QuickCheck.Test ( run, maxSize, stdArgs, callbackPostTest, callbackPostFinalFailure )
 import Test.QuickCheck.Text
 import Test.QuickCheck.State
 
@@ -110,7 +110,7 @@ initialState topts = do
         , numTryShrinks     = 0 })
 
 
--- TODO: do something with (summary st) in myTest?
+-- NB: could use (summary st) in the messages produced by myTest
 myTest :: State -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
 myTest st f
   | ntest                >= maxSuccessTests st   = return (if expectedFailure st then PropertyOK else PropertyNoExpectedFailure, ntest)
@@ -140,7 +140,30 @@ myRunATest st f = do
                      } f
          
        Just False -> -- failed test
-         do liftIO $ foundFailure st res ts
-            if expect res
-              then return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
+         do if expect res
+              then liftIO $ myFoundFailure st res ts
+                   -- Could terminate immediately without any shrinking by doing this instead:
+                   -- return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
               else return (PropertyOK, numSuccessTests st + 1)
+
+
+-- | This function eventually reports a failure but attempts to shrink the counterexample before it does so
+myFoundFailure :: State -> Result -> [Rose (IO Result)] -> IO (PropertyStatus, PropertyTestCount)
+myFoundFailure st res ts = myLocalMin st{ numTryShrinks = 0, isShrinking = True } res ts
+
+myLocalMin :: State -> Result -> [Rose (IO Result)] -> IO (PropertyStatus, PropertyTestCount)
+myLocalMin st res [] = do
+    callbackPostFinalFailure st res
+    -- NB: could use (numSuccessShrinks st) in the message somehow
+    return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
+
+myLocalMin st res (t : ts) =
+  do (res', ts') <- run t
+     callbackPostTest st res'
+     
+     -- NB: both (numSuccessShrinks st) (numTryShrinks st) contain interesting information here.
+     -- I'm not going to output any message at all here (unlike QuickCheck2) because I want a
+     -- single error message I can give to the user.
+     if ok res' == Just False
+       then myFoundFailure st{ numSuccessShrinks = numSuccessShrinks st + 1 } res' ts'
+       else myLocalMin st{ numTryShrinks = numTryShrinks st + 1 } res ts
