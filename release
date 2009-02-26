@@ -11,7 +11,7 @@ fi
 
 
 # Not 'example' as well because we don't really want to upload a simple example package to Hackage.
-declare -a subdirectories=(core hunit quickcheck)
+declare -a subdirectories=(core hunit quickcheck quickcheck2)
 declare -a filenames
 
 index=0
