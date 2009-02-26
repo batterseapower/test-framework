@@ -1,3 +1,7 @@
+-- | A generic test framework for all types of Haskell test.
+--
+-- For an example of how to use test-framework, please see
+-- <http://github.com/batterseapower/test-framework/raw/master/example/Test/Framework/Example.lhs>
 module Test.Framework (
         module Test.Framework.Core,
         module Test.Framework.Options,
