@@ -1,8 +1,8 @@
 === High Priority ===
 
 === Medium Priority ===
-* QuickCheck2 provider
 
 === Low Priority ===
-* Report the number of tests run when a QuickCheck times out
+* Report the number of tests run when a QuickCheck run times out
 * Make the cursor un-hide when Ctrl-C is used to exit the program: may involve something like myThreadId >>= \main_thread -> installHandler sigINT (Catch (throwTo main_thread $ ExitException $ ExitFailure 1)) Nothing
+* Make the QuickCheck2 provider correlate arguments with test failures (need to change QuickCheck2 upstream...)
