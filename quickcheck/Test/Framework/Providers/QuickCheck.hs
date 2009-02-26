@@ -1,3 +1,6 @@
+-- | Allows QuickCheck1 properties to be used with the test-framework package.
+--
+-- For an example of how to use test-framework, please see <http://github.com/batterseapower/test-framework/raw/master/example/Test/Framework/Example.lhs>
 module Test.Framework.Providers.QuickCheck (
         testProperty
     ) where
