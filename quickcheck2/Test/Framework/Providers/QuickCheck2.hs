@@ -1,3 +1,10 @@
+-- | Allows QuickCheck2 properties to be used with the test-framework package.
+--
+-- For an example of how to use test-framework, please see <http://github.com/batterseapower/test-framework/raw/master/example/Test/Framework/Example.lhs>
+--
+-- Due to technical limitations of the QuickCheck2 package, it's not possible to correlate arguments that caused
+-- the failure with the particular 'Test' that caused them. This means that the arguments to your properties that
+-- lead to failure will be printed at non-deterministic positions in the stdout stream. Sorry.
 module Test.Framework.Providers.QuickCheck2 (
         testProperty
     ) where
@@ -45,7 +52,7 @@ instance Show PropertyResult where
       = case status of
             PropertyOK                      -> "OK, passed " ++ tests_run_str ++ " tests"
             PropertyArgumentsExhausted      -> "Arguments exhausted after " ++ tests_run_str ++ " tests"
-            PropertyFalsifiable fail_reason -> "Falsifiable with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests:\n" ++ fail_reason
+            PropertyFalsifiable fail_reason -> "Falsifiable with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests. Reason: " ++ fail_reason
             PropertyNoExpectedFailure       -> "No expected failure with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests"
             PropertyTimedOut                -> "Timed out after " ++ tests_run_str ++ " tests"
       where
