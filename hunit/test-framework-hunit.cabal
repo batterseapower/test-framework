@@ -1,6 +1,6 @@
 Name:                test-framework-hunit
 Version:             0.2.1
-Cabal-Version:       >= 1.2
+Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            HUnit support for the test-framework package.
 License:             BSD3

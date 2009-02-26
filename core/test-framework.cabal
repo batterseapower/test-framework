@@ -1,6 +1,6 @@
 Name:                test-framework
 Version:             0.2.1
-Cabal-Version:       >= 1.2
+Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
 Description:         Allows tests such as QuickCheck properties and HUnit test cases to be assembled into test groups, run in
