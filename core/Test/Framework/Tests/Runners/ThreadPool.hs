@@ -7,16 +7,9 @@ import Test.HUnit
 import System.Random
 
 import Control.Concurrent
-import Control.Exception
-import Control.Monad
 
 import Prelude hiding (catch)
 
-
-_expectBroken :: Assertion -> Assertion
-_expectBroken assertion = do
-    did_succeed <- catch (assertion >> return True) (const $ return False)
-    when did_succeed $ assertFailure "Test unexpectedly succeeded"
 
 tests :: [Test]
 tests = [TestLabel "ThreadPool.executeOnPool preserves order"                         (TestCase test_execute_preserves_order),
