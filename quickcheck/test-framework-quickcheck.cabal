@@ -1,5 +1,5 @@
 Name:                test-framework-quickcheck
-Version:             0.2.1
+Version:             0.2.2
 Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            QuickCheck support for the test-framework package.
