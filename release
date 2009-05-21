@@ -20,6 +20,10 @@ while [ "$index" -lt "${#subdirectories[@]}" ]; do
     subdirectory=${subdirectories[index]}
     cd $subdirectory
 
+    # For those directories that use CPP, we need to configure before sdist will work without a warning
+    runghc Setup.lhs configure --user
+    
+    # OK, build the tarball
     sdist_output=`runghc Setup.lhs sdist`
 
     if [ "$?" != "0" ]; then
