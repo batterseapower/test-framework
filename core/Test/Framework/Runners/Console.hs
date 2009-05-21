@@ -144,7 +144,7 @@ showRunTest indent_level test_statistics (RunTest name test_type improving_resul
     property_suceeded <- showImprovingTestResult (return ()) indent_level name progress_bar improving_result
     return $ updateTestStatistics (\count -> adjustTestCount test_type count mempty) property_suceeded test_statistics
 showRunTest indent_level test_statistics (RunTestGroup name tests) = do
-    putDoc $ indent indent_level (text name <> char ':' <> linebreak)
+    putDoc $ (indent indent_level (text name <> char ':')) <> linebreak
     showRunTests (indent_level + 2) test_statistics tests
 
 showRunTests :: Int -> TestStatistics -> [RunTest] -> IO TestStatistics
@@ -211,4 +211,4 @@ showImprovingTestResult' erase indent_level test_name progress_bar (Improving in
     intermediate_str = show intermediate
 
 putTestHeader :: Int -> String -> Doc -> IO ()
-putTestHeader indent_level test_name result = putDoc $ indent indent_level (text test_name <> char ':' <+> result) <> linebreak
+putTestHeader indent_level test_name result = putDoc $ (indent indent_level (text test_name <> char ':' <+> result)) <> linebreak
