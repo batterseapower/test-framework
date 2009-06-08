@@ -20,7 +20,7 @@ Library
         
         Build-Depends:          test-framework >= 0.2.0, QuickCheck >= 2.1.0.0
         if flag(splitBase)
-                Build-Depends:          base >= 3, random >= 1
+                Build-Depends:          base >= 3 && < 5, random >= 1
         else
                 Build-Depends:          base < 3
         

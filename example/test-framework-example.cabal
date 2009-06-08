@@ -22,7 +22,7 @@ Executable test-framework-example
                                 test-framework-quickcheck >= 0.2.0, QuickCheck >= 1.1 && < 2,
                                 test-framework-hunit >= 0.2.0, HUnit >= 1.2 && < 2
         if flag(splitBase)
-                Build-Depends:          base >= 3
+                Build-Depends:          base >= 3 && < 5
         else
                 Build-Depends:          base < 3
         

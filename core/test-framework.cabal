@@ -46,7 +46,7 @@ Library
         
         Build-Depends:          ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
-                Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
+                Build-Depends:          base >= 3 && < 5, random >= 1.0, containers >= 0.1
         else
                 Build-Depends:          base < 3
         
@@ -70,7 +70,7 @@ Executable test-framework-tests
 
         Build-Depends:          HUnit >= 1.2, ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0, regex-posix >= 0.72
         if flag(splitBase)
-                Build-Depends:          base >= 3, random >= 1.0, containers >= 0.1
+                Build-Depends:          base >= 3 && < 5, random >= 1.0, containers >= 0.1
         else
                 Build-Depends:          base < 3
         
