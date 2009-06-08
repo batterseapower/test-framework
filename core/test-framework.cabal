@@ -1,5 +1,5 @@
 Name:                test-framework
-Version:             0.2.2
+Version:             0.2.3
 Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
@@ -8,10 +8,9 @@ Description:         Allows tests such as QuickCheck properties and HUnit test c
                      command line options. All of this comes with colored test output, progress reporting and test statistics output.
 License:             BSD3
 License-File:        LICENSE
-Extra-Source-Files:  README.textile
-Author:              Max Bolingbroke
-Maintainer:          batterseapower@hotmail.com
-Homepage:            http://github.com/batterseapower/test-framework
+Author:              Max Bolingbroke <batterseapower@hotmail.com>
+Maintainer:          Max Bolingbroke <batterseapower@hotmail.com>
+Homepage:            http://batterseapower.github.com/test-framework/
 Build-Type:          Simple
 
 Flag SplitBase

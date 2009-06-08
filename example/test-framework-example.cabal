@@ -1,14 +1,13 @@
 Name:                test-framework-example
-Version:             0.2.0
+Version:             0.2.1
 Cabal-Version:       >= 1.2
 Category:            Testing
 Synopsis:            Example testsuite for the test-framework package
 License:             BSD3
 License-File:        LICENSE
-Extra-Source-Files:  README.textile
-Author:              Max Bolingbroke
-Maintainer:          batterseapower@hotmail.com
-Homepage:            http://github.com/batterseapower/test-framework
+Author:              Max Bolingbroke <batterseapower@hotmail.com>
+Maintainer:          Max Bolingbroke <batterseapower@hotmail.com>
+Homepage:            http://batterseapower.github.com/test-framework/
 Build-Type:          Simple
 
 Flag SplitBase
