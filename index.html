@@ -41,11 +41,19 @@ lighthouse_url: http://bsp.lighthouseapp.com/projects/15661-hs-test-framework
         
         <h2>Description</h2>
         <div class="section">
-            <p>Allows tests such as <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/QuickCheck">QuickCheck</a> properties and
-               <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/HUnit"HUnit</a> test cases to be assembled into test groups,
-               run in parallel (but reported in deterministic order, to aid diff interpretation) and filtered and controlled by command line options.</p>
+            <p>A common testing framework that allows tests such as <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/QuickCheck">QuickCheck</a>
+              properties and <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/HUnit">HUnit</a> test cases to used together easily.  Furthermore,
+              it enhances both styles of test with all of these great features:</p>
             
-            <p>All of this comes with colored test output, progress reporting and test statistics output.</p>
+            <ul>
+              <li>Run tests in parallel but report results in a deterministic order (to aid diff-based analysis of test output).</li>
+              <li>Progress reporting for individual QuickCheck properties and for the whole suite being run.</li>
+              <li>Filter the tests to be run using patterns specified on the command line.</li>
+              <li>Hierarchical, colored display of test results.</li>
+              <li>Reporting of test statistics (number of tests run, number failed etc.).</li>
+              <li>Extensibility: add your own test providers above and beyond those provided.</li>
+              <li>Reporting of the seed used upon a failed QuickCheck run, so you can reproduce the failure if necessary.</li>
+            </ul>
         </div>
         
         <h2>Example</h2>
@@ -136,6 +144,34 @@ $ ./Example --maximum-generated-tests=5000 +RTS -N2
            All of the supplied providers are built using this mechanism, and so you probably want to install not only the
            infrastructure package (<code>test-framework</code>), but also the commonly-used providers <code>test-framework-quickcheck</code>
            and <code>test-framework-hunit</code>.</p>
+        
+        <h2>The Console Test Runner</h2>
+        <p>A description of the options available can be obtained by using the option <code>--help</code> on the command line.</p>
+
+        <p>The test-selection syntax for use with the <code>-s</code> command line option is based on that of shell globs or
+           <a href="http://www.kernel.org/pub/software/scm/git/docs/gitignore.html">Git .gitignore files</a>. Test patterns consist of the following:</p>
+        
+        <ul>
+          <li>An optional prefixed bang <code>!</code> which negates the pattern.</li>
+          <li>If the pattern ends with a slash, it is removed for the purpose of the following description, but it would only find
+              a match with a test group. In other words, <code>foo/</code> will match a group called <code>foo</code> and any tests
+              underneath it, but will not match a regular test <code>foo</code>.</li>
+          <li>If the pattern does not contain a slash <code>/</code>, the framework checks for a match against any single component of the path.</li>
+          <li>
+            Otherwise, the pattern is treated as a glob, where:
+            <ul>
+             <li>The wildcard <code>*</code> matches anything within a single path component (i.e. <code>foo</code> but not <code>foo/bar</code>).</li>
+             <li>Two wildcards <code>**</code> matches anything (i.e. <code>foo</code> and <code>foo/bar</code>).</li>
+             <li>Anything else matches exactly that text in the path (i.e. <code>foo</code> would only match a component of the test path called <code>foo</code>
+                 (or a substring of that form).</li>
+            </ul>
+        </ul>
+
+        <p>For example, <code>group/*1</code> matches <code>group/test1</code> but not <code>group/subgroup/test1</code>, whereas
+           both examples would be matched by <code>group/**1</code>.  A leading slash matches the beginning of the test path; for example, <code>/test*</code>
+           matches <code>test1</code> but not <code>group/test1</code>.</p></li>
+
+        <p>A test will be run if it matches <i>any</i> of the patterns supplied with <code>-s</code>.</p>
         
         <h2>Documentation</h2>
         <p>Haddock documentation is available at Hackage:</p>
