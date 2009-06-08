@@ -1,0 +1,6 @@
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Generated site
+_site/

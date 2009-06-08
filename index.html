@@ -1,0 +1,197 @@
+---
+username: batterseapower
+author_name: Max Bolingbroke
+author_email: batterseapower@hotmail.com
+repository: test-framework
+hackage_packages:
+  - name: test-framework
+    doc_module: Test-Framework.html
+  - name: test-framework-quickcheck
+    doc_module: Test-Framework-Providers-QuickCheck.html
+  - name: test-framework-quickcheck2
+    doc_module: Test-Framework-Providers-QuickCheck2.html
+  - name: test-framework-hunit
+    doc_module: Test-Framework-Providers-QuickCheck2.html
+lighthouse_url: http://bsp.lighthouseapp.com/projects/15661-hs-test-framework
+---
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <title>{{ page.repository }} @ GitHub</title>
+    <link rel="stylesheet" href="http://{{ page.username }}.github.com/styles/main.css">
+    <link rel="stylesheet" href="http://{{ page.username }}.github.com/styles/syntax.css">
+</head>
+<body>
+    <a href="http://github.com/{{ page.username }}/{{ page.repository }}">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
+    </a>
+    <div id="container">
+        <h1>
+            <a href="http://github.com/{{ page.username }}/{{ page.repository }}">{{ page.repository }}</a>
+            <span class="small">by
+                <a href="http://github.com/{{ page.username }}">{{ page.author_name }}</a>
+            </span>
+        </h1>
+        
+        <div class="description">
+            A parallel test framework for combining tests made using QuickCheck and HUnit and much more...
+        </div>
+        
+        <h2>Description</h2>
+        <div class="section">
+            <p>Allows tests such as <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/QuickCheck">QuickCheck</a> properties and
+               <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/HUnit"HUnit</a> test cases to be assembled into test groups,
+               run in parallel (but reported in deterministic order, to aid diff interpretation) and filtered and controlled by command line options.</p>
+            
+            <p>All of this comes with colored test output, progress reporting and test statistics output.</p>
+        </div>
+        
+        <h2>Example</h2>
+        <div class="section">
+            <p>The latest version of the example is always available <a href="http://github.com/{{ page.username }}/{{ page.repository }}/tree/master/example/Test/Framework/Example.lhs">online</a>:</p>
+
+{% highlight haskell %}
+-- Adapted from an example by Don Stewart. For licensing information
+-- please see the file "example/Test/Framework/Example.lhs" in the source tree.
+import Test.Framework (defaultMain, testGroup)
+import Test.Framework.Providers.HUnit
+import Test.Framework.Providers.QuickCheck (testProperty)
+
+import Test.QuickCheck
+import Test.HUnit
+
+import Data.List
+
+
+main = defaultMain tests
+
+tests = [
+        testGroup "Sorting Group 1" [
+                testProperty "sort1" prop_sort1,
+                testProperty "sort2" prop_sort2,
+                testProperty "sort3" prop_sort3
+            ],
+        testGroup "Sorting Group 2" [
+                testProperty "sort4" prop_sort4,
+                testProperty "sort5" prop_sort5,
+                testProperty "sort6" prop_sort6,
+                testCase "sort7" test_sort7,
+                testCase "sort8" test_sort8
+            ]
+    ]
+
+
+prop_sort1 xs = sort xs == sortBy compare xs
+  where types = (xs :: [Int])
+
+prop_sort2 xs =
+        (not (null xs)) ==>
+        (head (sort xs) == minimum xs)
+  where types = (xs :: [Int])
+
+prop_sort3 xs = (not (null xs)) ==>
+        last (sort xs) == maximum xs
+  where types = (xs :: [Int])
+
+prop_sort4 xs ys =
+        (not (null xs)) ==>
+        (not (null ys)) ==>
+        (head (sort (xs ++ ys)) == min (minimum xs) (minimum ys))
+  where types = (xs :: [Int], ys :: [Int])
+
+prop_sort5 xs ys =
+        (not (null xs)) ==>
+        (not (null ys)) ==>
+        (head (sort (xs ++ ys)) == max (maximum xs) (maximum ys))
+  where types = (xs :: [Int], ys :: [Int])
+
+prop_sort6 xs ys =
+        (not (null xs)) ==>
+        (not (null ys)) ==>
+        (last (sort (xs ++ ys)) == max (maximum xs) (maximum ys))
+  where types = (xs :: [Int], ys :: [Int])
+
+test_sort7 = sort [8, 7, 2, 5, 4, 9, 6, 1, 0, 3] @?= [0..9]
+
+test_sort8 = error "This test deliberately contains a user error"
+{% endhighlight %}
+
+            <p>We can run these tests from the command line like so:</p>
+
+<pre>
+$ ghc -package test-framework -package test-framework-quickcheck \
+    -package test-framework-hunit -threaded Example.hs -o Example
+$ ./Example --maximum-generated-tests=5000 +RTS -N2
+</pre>
+
+            <div class="screenshotframe">
+                <img class="screenshot" src="images/example.png" />
+            </div>
+        </div>
+        
+        <h2>Providers</h2>
+        <p>The framework is built with an extensible architecture that allows anyone to add their own test &quot;provider&quot;.
+           All of the supplied providers are built using this mechanism, and so you probably want to install not only the
+           infrastructure package (<code>test-framework</code>), but also the commonly-used providers <code>test-framework-quickcheck</code>
+           and <code>test-framework-hunit</code>.</p>
+        
+        <h2>Documentation</h2>
+        <p>Haddock documentation is available at Hackage:</p>
+        <ul>
+          {% for package in page.hackage_packages %}
+            <li><a href="http://hackage.haskell.org/packages/archive/{{ package.name }}/latest/doc/html/{{ package.doc_module }}">{{ package.name }}</a></li>
+          {% endfor %}
+        <ul>
+        
+        <h2>Download</h2>
+        <div class="section">
+            <div class="downloadoption">
+                <div class="downloadoptionimage">
+                    <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/{% for package in page.hackage_packages limit:1 %}{{ package.name }}{% endfor %}">
+                        <img width="90" src="http://{{ page.username }}.github.com/images/cabal-cube.png" />
+                    </a>
+                </div>
+                <div class="downloadoptiontext">
+                    <p>Install with <a href="http://haskell.org/haskellwiki/Cabal-Install">Cabal</a>:
+<pre>{% for package in page.hackage_packages %}
+$ cabal install {{ package.name }}{% endfor %}
+</pre></p>
+                </div>
+                <div style="clear: both;"></div> <!-- force the div to clear so downloadoption encompasses the other two divs -->
+            </div>
+            <div class="downloadoption">
+                <div class="downloadoptionimage">
+                    <a href="http://github.com/{{ page.username }}/{{ page.repository }}/zipball/master">
+                        <img width="90" src="http://github.com/images/modules/download/zip.png" />
+                    </a>
+                </div>
+                <div class="downloadoptiontext">
+                    <p>Download this project in either <a href="http://github.com/{{ page.username }}/{{ page.repository }}/zipball/master">
+                       zip</a> or <a href="http://github.com/{{ page.username }}/{{ page.repository }}/tarball/master">tar</a> formats.</p>
+                </div>
+                <div style="clear: both;"></div> <!-- force the div to clear so downloadoption encompasses the other two divs -->
+            </div>
+            <div class="downloadoption">
+                <div class="downloadoptionimage">
+                    <a href="http://github.com/{{ page.username }}/{{ page.repository }}">
+                        <img width="90" src="http://{{ page.username }}.github.com/images/git.png" />
+                    </a>
+                </div>
+                <div class="downloadoptiontext">
+                    <p>Clone the project with <a href="http://git-scm.com">Git</a>:
+                       <pre>$ git clone git://github.com/{{ page.username }}/{{ page.repository }}</pre><br />
+                       Alternatively, browse the source on <a href="http://github.com/{{ page.username }}/{{ page.repository }}">GitHub</a></p>
+                </div>
+                <div style="clear: both;"></div> <!-- force the div to clear so downloadoption encompasses the other two divs -->
+            </div>
+        </div>
+        
+        <h2>Contact</h2>
+        <p>You can submit a ticket at <a href="{{ page.lighthouse_url }}">Lighthouse</a> to
+           report a bug.</p>
+        
+        <p>Other enquiries can be directed to me <a href="mailto:{{ page.author_email }}">via email</a></p>
+    </div>
+</body>
