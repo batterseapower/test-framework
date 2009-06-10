@@ -9,6 +9,9 @@ import Test.Framework.Providers.API
 
 import Test.QuickCheck hiding (Property)
 
+import qualified Control.Exception.Extensible as E
+import Control.Parallel.Strategies (rnf)
+
 import Data.List
 
 import System.Random
@@ -37,6 +40,7 @@ data PropertyStatus = PropertyOK                   -- ^ The property is true as 
                     | PropertyArgumentsExhausted   -- ^ The property may be true, but we ran out of arguments to try it out on
                     | PropertyFalsifiable [String] -- ^ The property was not true. The list of strings are the arguments inducing failure.
                     | PropertyTimedOut             -- ^ The property timed out during execution
+                    | PropertyException String     -- ^ The property raised an exception during execution
 
 instance Show PropertyResult where
     show (PropertyResult { pr_status = status, pr_used_seed = used_seed, pr_tests_run = mb_tests_run })
@@ -45,6 +49,7 @@ instance Show PropertyResult where
             PropertyArgumentsExhausted    -> "Arguments exhausted after " ++ tests_run_str ++ " tests"
             PropertyFalsifiable test_args -> "Falsifiable with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests:\n" ++ unlinesConcise test_args
             PropertyTimedOut              -> "Timed out after " ++ tests_run_str ++ " tests"
+            PropertyException text        -> "Got an exception: " ++ text
       where
         tests_run_str = fmap show mb_tests_run `orElse` "an unknown number of"
 
@@ -87,13 +92,22 @@ myTests topts gen rnd0 ntest nfail stamps
   | nfail == unK (topt_maximum_unsuitable_generated_tests topts) = do return (PropertyArgumentsExhausted, ntest)
   | otherwise = do
       yieldImprovement ntest
-      case ok result of
-          Nothing    ->
-            myTests topts gen rnd1 ntest (nfail + 1) stamps
-          Just True  ->
-            myTests topts gen rnd1 (ntest + 1) nfail (stamp result:stamps)
-          Just False ->
-            return (PropertyFalsifiable (arguments result), ntest)
+      -- Rather clunky code that tries to catch exceptions early.  If we don't do this then errors
+      -- in your properties just kill the test framework - very bad!
+      mb_exception <- liftIO $ E.catch (fmap (const Nothing) $ E.evaluate (rnfResult result))
+                                       (return . Just . show :: E.SomeException -> IO (Maybe String))
+      case mb_exception of
+          Just e -> return (PropertyException e, ntest)
+          Nothing -> case ok result of
+                        Nothing    ->
+                          myTests topts gen rnd1 ntest (nfail + 1) stamps
+                        Just True  ->
+                          myTests topts gen rnd1 (ntest + 1) nfail (stamp result:stamps)
+                        Just False ->
+                          return (PropertyFalsifiable (arguments result), ntest)
   where
     result       = generate (configSize defaultConfig ntest) rnd2 gen
     (rnd1, rnd2) = split rnd0
+    
+    -- Reduce a Result to RNF before we poke at it in order to uncover hidden exceptions
+    rnfResult r = rnf (ok r) `seq` rnf (stamp r) `seq` rnf (arguments r)
