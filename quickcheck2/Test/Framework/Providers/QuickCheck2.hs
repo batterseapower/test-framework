@@ -17,6 +17,8 @@ import Test.QuickCheck.Test ( run, maxSize, stdArgs, callbackPostTest, callbackP
 import Test.QuickCheck.Text
 import Test.QuickCheck.State
 
+import qualified Control.Exception.Extensible as E
+
 import Data.List
 
 import System.Random
@@ -46,6 +48,7 @@ data PropertyStatus = PropertyOK                 -- ^ The property is true as fa
                     | PropertyFalsifiable String -- ^ The property was not true. The string is the reason.
                     | PropertyNoExpectedFailure  -- ^ We expected that a property would fail but it didn't
                     | PropertyTimedOut           -- ^ The property timed out during execution
+                    | PropertyException String   -- ^ The property raised an exception during execution
 
 instance Show PropertyResult where
     show (PropertyResult { pr_status = status, pr_used_seed = used_seed, pr_tests_run = mb_tests_run })
@@ -55,6 +58,7 @@ instance Show PropertyResult where
             PropertyFalsifiable fail_reason -> "Falsifiable with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests. Reason: " ++ fail_reason
             PropertyNoExpectedFailure       -> "No expected failure with seed " ++ show used_seed ++ ", after " ++ tests_run_str ++ " tests"
             PropertyTimedOut                -> "Timed out after " ++ tests_run_str ++ " tests"
+            PropertyException text          -> "Got an exception: " ++ text
       where
         tests_run_str = fmap show mb_tests_run `orElse` "an unknown number of"
 
@@ -129,29 +133,34 @@ myRunATest :: State -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount 
 myRunATest st f = do
     let size = computeSize st (numSuccessTests st) (numDiscardedTests st)
         (rnd1, rnd2) = split (randomSeed st)
-    (res, ts) <- liftIO $ run (unProp (f rnd1 size))
-    liftIO $ callbackPostTest st res
+    -- Careful to catch exceptions, or else they might bring down the whole test framework
+    ei_st_res <- liftIO $ E.catch (fmap Right $ run (unProp (f rnd1 size)))
+                                  (\e -> return $ Left $ show (e :: E.SomeException))
+    case ei_st_res of
+       Left text -> return (PropertyException text, numSuccessTests st + 1)
+       Right (res, ts) -> do
+           liftIO $ callbackPostTest st res
     
-    case ok res of
-       Just True -> -- successful test
-         do myTest st{ numSuccessTests = numSuccessTests st + 1
-                     , randomSeed      = rnd2
-                     , collected       = stamp res : collected st
-                     , expectedFailure = expect res
-                     } f
+           case ok res of
+              Just True -> -- successful test
+                do myTest st{ numSuccessTests = numSuccessTests st + 1
+                            , randomSeed      = rnd2
+                            , collected       = stamp res : collected st
+                            , expectedFailure = expect res
+                            } f
        
-       Nothing -> -- discarded test
-         do myTest st{ numDiscardedTests = numDiscardedTests st + 1
-                     , randomSeed        = rnd2
-                     , expectedFailure   = expect res
-                     } f
+              Nothing -> -- discarded test
+                do myTest st{ numDiscardedTests = numDiscardedTests st + 1
+                            , randomSeed        = rnd2
+                            , expectedFailure   = expect res
+                            } f
          
-       Just False -> -- failed test
-         do if expect res
-              then liftIO $ myFoundFailure st res ts
-                   -- Could terminate immediately without any shrinking by doing this instead:
-                   -- return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
-              else return (PropertyOK, numSuccessTests st + 1)
+              Just False -> -- failed test
+                do if expect res
+                     then liftIO $ myFoundFailure st res ts
+                          -- Could terminate immediately without any shrinking by doing this instead:
+                          -- return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
+                     else return (PropertyOK, numSuccessTests st + 1)
 
 
 -- | This function eventually reports a failure but attempts to shrink the counterexample before it does so
