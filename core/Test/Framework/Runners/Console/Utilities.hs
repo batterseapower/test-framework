@@ -4,9 +4,7 @@ module Test.Framework.Runners.Console.Utilities (
 
 import System.Console.ANSI
 
-import Control.Exception
-
-import Prelude hiding (catch)
+import Control.Exception.Extensible
 
 
 hideCursorDuring :: IO a -> IO a
