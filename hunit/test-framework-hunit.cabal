@@ -10,19 +10,24 @@ Maintainer:          Max Bolingbroke <batterseapower@hotmail.com>
 Homepage:            http://batterseapower.github.com/test-framework/
 Build-Type:          Simple
 
-Flag SplitBase
-        Description:    Choose the new smaller, split-up base package
+Flag Base4
+        Description:    Choose base version 4
         Default:        True
+
+Flag Base3
+        Description:    Choose base version 3
+        Default:        False
 
 
 Library
         Exposed-Modules:        Test.Framework.Providers.HUnit
         
-        Build-Depends:          test-framework >= 0.2.0, HUnit >= 1.2 && < 2
-        if flag(splitBase)
-                Build-Depends:          base >= 3 && < 5
+        Build-Depends:          test-framework >= 0.2.0, HUnit >= 1.2 && < 2, extensible-exceptions >= 0.1.1
+        if flag(base3)
+                Build-Depends:          base >= 3 && < 4
         else
-                Build-Depends:          base < 3
+                if flag(base4)
+                        Build-Depends:          base >= 4 && < 5
         
         Extensions:             TypeOperators
                                 MultiParamTypeClasses
