@@ -139,6 +139,28 @@ $ ./Example --maximum-generated-tests=5000 +RTS -N2
             </div>
         </div>
         
+        <h2>FAQ</h2>
+        
+        <h3>I tried to run the example, and got an error about not having a Testable instance</h3>
+        <p>You may get an error like the following:</p>
+        
+<pre>
+No instance for (QuickCheck-1.2.0.0:Test.QuickCheck.Testable
+                      (Gen Prop))
+     arising from a use of `testProperty' at Example.lhs:68:16-46
+</pre>
+
+        <p>The reason is that GHC is building the example (which uses QuickCheck 1) with the QuickCheck 2 library. You can fix
+           this by running:</p>
+
+<pre>
+$ ghc-pkg hide QuickCheck-2.1.0.1
+</pre>
+           
+           <p>You may need adjust the version number to match the one on your machine, as reported by <code>ghc-pkg list</code>.
+              Alternatively, you can supply the <code>-package QuickCheck-1.2.0.0</code> flag when invoking GHC (again you may
+              need to change the version number to match your installed QuickCheck version).</p>
+        
         <h2>Providers</h2>
         <p>The framework is built with an extensible architecture that allows anyone to add their own test &quot;provider&quot;.
            All of the supplied providers are built using this mechanism, and so you probably want to install not only the
