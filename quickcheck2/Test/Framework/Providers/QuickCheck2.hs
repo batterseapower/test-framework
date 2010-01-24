@@ -13,13 +13,11 @@ import Test.Framework.Providers.API
 
 import Test.QuickCheck.Gen
 import Test.QuickCheck.Property hiding ( Property )
-import Test.QuickCheck.Test ( run, maxSize, stdArgs, callbackPostTest, callbackPostFinalFailure )
+import Test.QuickCheck.Test ( maxSize, stdArgs, callbackPostTest, callbackPostFinalFailure )
 import Test.QuickCheck.Text
 import Test.QuickCheck.State
 
 import qualified Control.Exception.Extensible as E
-
-import Data.List
 
 import System.Random
 
@@ -132,10 +130,12 @@ myTest st f
 myRunATest :: State -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
 myRunATest st f = do
     let size = computeSize st (numSuccessTests st) (numDiscardedTests st)
-        (rnd1, rnd2) = split (randomSeed st)
     -- Careful to catch exceptions, or else they might bring down the whole test framework
-    ei_st_res <- liftIO $ E.catch (fmap Right $ run (unProp (f rnd1 size)))
-                                  (\e -> return $ Left $ show (e :: E.SomeException))
+    ei_st_res <- liftIO $ flip E.catch (\e -> return $ Left $ show (e :: E.SomeException)) $ do
+                                  MkRose mres ts <- protectRose (unProp (f rnd1 size))
+                                  res <- mres
+                                  return (Right (res, ts))
+                                  
     case ei_st_res of
        Left text -> return (PropertyException text, numSuccessTests st + 1)
        Right (res, ts) -> do
@@ -161,6 +161,8 @@ myRunATest st f = do
                           -- Could terminate immediately without any shrinking by doing this instead:
                           -- return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
                      else return (PropertyOK, numSuccessTests st + 1)
+  where
+   (rnd1,rnd2) = split (randomSeed st)
 
 
 -- | This function eventually reports a failure but attempts to shrink the counterexample before it does so
@@ -174,7 +176,8 @@ myLocalMin st res [] = do
     return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
 
 myLocalMin st res (t : ts) =
-  do (res', ts') <- run t
+  do MkRose mres' ts' <- protectRose t
+     res' <- mres'
      callbackPostTest st res'
      
      -- NB: both (numSuccessShrinks st) (numTryShrinks st) contain interesting information here.
