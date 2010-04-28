@@ -70,11 +70,13 @@ echo "This is your last chance to abort! I'm going to upload v$version in 10 sec
 sleep 10
 
 
-git tag "v$version"
+if [ -n "$version" ]; then
+    git tag "v$version"
 
-if [ "$?" != "0" ]; then
-    echo "Git tag failed, aborting"
-    exit 1
+    if [ "$?" != "0" ]; then
+        echo "Git tag failed, aborting"
+        exit 1
+    fi
 fi
 
 
