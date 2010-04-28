@@ -161,6 +161,15 @@ $ ghc-pkg hide QuickCheck-2.1.0.1
               Alternatively, you can supply the <code>-package QuickCheck-1.2.0.0</code> flag when invoking GHC (again you may
               need to change the version number to match your installed QuickCheck version).</p>
         
+        <h3>I have some tests that just call <code>error</code> but the tests pass</h3>
+        <p>This happens because GHC finds it convenient to eta-expand the calls to error, so we can no longer observe the failure.
+           This is dodgy behaviour by GHC, but it's unlikely to change any time soon, so the workaround is to compile your tests
+           with <code>-O0</code> (the default).</p>
+        
+        <p>If you really do want to compile your tests with optimisations enabled, you should also be able to supply the
+           <code>-fno-full-laziness</code> flag along with your <code>-O1</code> or <code>-O2</code> flag. However, if new optimisations
+           are added to GHC they may break this workaround - it's probably safest to turn optimisation off altogether.</p>
+        
         <h2>Providers</h2>
         <p>The framework is built with an extensible architecture that allows anyone to add their own test &quot;provider&quot;.
            All of the supplied providers are built using this mechanism, and so you probably want to install not only the
