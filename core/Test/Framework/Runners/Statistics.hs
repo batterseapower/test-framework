@@ -1,6 +1,7 @@
 module Test.Framework.Runners.Statistics (
         TestCount, testCountTestTypes, testCountForType, adjustTestCount, testCountTotal,
-        TestStatistics(..), ts_pending_tests, ts_no_failures, initialTestStatistics
+        TestStatistics(..), ts_pending_tests, ts_no_failures,
+        initialTestStatistics, updateTestStatistics
   ) where
 
 import Test.Framework.Core (TestTypeName)
@@ -59,4 +60,11 @@ initialTestStatistics total_tests = TestStatistics {
         ts_run_tests = mempty,
         ts_passed_tests = mempty,
         ts_failed_tests = mempty
+    }
+
+updateTestStatistics :: (Int -> TestCount) -> Bool -> TestStatistics -> TestStatistics
+updateTestStatistics count_constructor test_suceeded test_statistics = test_statistics {
+        ts_run_tests    = ts_run_tests test_statistics    `mappend` (count_constructor 1),
+        ts_failed_tests = ts_failed_tests test_statistics `mappend` (count_constructor (if test_suceeded then 0 else 1)),
+        ts_passed_tests = ts_passed_tests test_statistics `mappend` (count_constructor (if test_suceeded then 1 else 0))
     }

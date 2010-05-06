@@ -161,13 +161,6 @@ testStatisticsProgressBar test_statistics = progressBar (colorPassOrFail no_fail
     -- smaller width we prevent this from happening.  Bit of a hack, but it does the job.
     terminal_width = 79
 
-updateTestStatistics :: (Int -> TestCount) -> Bool -> TestStatistics -> TestStatistics
-updateTestStatistics count_constructor test_suceeded test_statistics = test_statistics {
-        ts_run_tests    = ts_run_tests test_statistics    `mappend` (count_constructor 1),
-        ts_failed_tests = ts_failed_tests test_statistics `mappend` (count_constructor (if test_suceeded then 0 else 1)),
-        ts_passed_tests = ts_passed_tests test_statistics `mappend` (count_constructor (if test_suceeded then 1 else 0))
-    }
-
 
 consumeImprovingThing :: (a :~> b) -> [(a :~> b)]
 consumeImprovingThing improving@(Finished _)       = [improving]
