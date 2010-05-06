@@ -5,9 +5,12 @@ module Test.Framework.Runners.XML (
 import Test.Framework.Runners.Statistics       ( testCountTotal, TestStatistics(..) )
 import Test.Framework.Runners.Core             ( FinishedTest )
 import Test.Framework.Runners.XML.JUnitWriter  ( RunDescription(..), serialize )
+import Test.Framework.Runners.XML.HostName     ( getHostName )
 
-import Network.BSD         ( getHostName )
-import System.Time         ( getClockTime )
+import Data.Time.Format    ( formatTime )
+import Data.Time.LocalTime ( getZonedTime )
+
+import System.Locale ( defaultTimeLocale )
 
 
 produceReport :: TestStatistics -> [FinishedTest] -> IO String
@@ -28,7 +31,7 @@ produceReport test_statistics fin_tests = fmap serialize $ mergeResults test_sta
 mergeResults :: TestStatistics -> [FinishedTest] -> IO RunDescription
 mergeResults test_statistics fin_tests = do
   host <- getHostName
-  theTime <- getClockTime
+  theTime <- getZonedTime
   return RunDescription {
             errors = 0                  -- not yet available
           , failedCount = testCountTotal (ts_failed_tests test_statistics) -- this includes errors
@@ -37,7 +40,7 @@ mergeResults test_statistics fin_tests = do
           , suiteName = "test-framework tests" -- not yet available
           , testCount = testCountTotal (ts_total_tests test_statistics)
           , time = 0.0                  -- We don't currently measure the test run time.
-          , timeStamp = Just $ show theTime
+          , timeStamp = Just $ formatTime defaultTimeLocale "%a %B %e %k:%M:%S %Z %Y" theTime -- e.g. Thu May  6 22:09:10 BST 2010
           , runId = Nothing             -- not applicable
           , package = Nothing           -- not yet available
           , tests = fin_tests
