@@ -9,6 +9,7 @@ import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Runners.Processors
 import Test.Framework.Runners.Statistics
+import qualified Test.Framework.Runners.XML as XML
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
@@ -57,7 +58,10 @@ optionsDescription = [
             "specifies that tests should be run without a timeout, by default",
         Option ['t'] ["select-tests"]
             (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "TEST-PATTERN")
-            "only tests that match at least one glob pattern given by an instance of this argument will be run"
+            "only tests that match at least one glob pattern given by an instance of this argument will be run",
+        Option [] ["jxml"]
+            (OptArg (\t -> mempty { ropt_xml_output = Just (Just t) }) "FILE")
+            "Set the output format to junit-xml, and (optionally) writes to FILE instead of STDOUT"
     ]
 
 interpretArgs :: [String] -> IO (Either String (RunnerOptions, [String]))
@@ -95,10 +99,15 @@ defaultMainWithOpts tests ropts = do
     running_tests <- runTests ropts' tests
     
     -- Show those test results to the user as we get them
-    run_tests <- Console.showRunTestsTop running_tests
+    fin_tests <- Console.showRunTestsTop running_tests
+    let test_statistics' = gatherStatistics fin_tests
+    
+    -- Output XML report (if requested)
+    case ropt_xml_output ropts' of
+        K (Just mb_file) -> XML.produceReport test_statistics' fin_tests >>= maybe putStrLn writeFile mb_file
+        _ -> return ()
     
     -- Set the error code depending on whether the tests succeded or not
-    let test_statistics' = gatherStatistics run_tests
     exitWith $ if ts_no_failures test_statistics'
                then ExitSuccess
                else ExitFailure 1
@@ -108,5 +117,6 @@ completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions
 completeRunnerOptions ro = RunnerOptions {
             ropt_threads = K $ ropt_threads ro `orElse` processorCount,
             ropt_test_options = K $ ropt_test_options ro `orElse` mempty,
-            ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty
+            ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty,
+            ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing
         }

@@ -41,8 +41,8 @@ showRunTestsTop running_tests = hideCursorDuring $ do
 showRunTest :: Int -> TestStatistics -> RunningTest -> IO (TestStatistics, FinishedTest)
 showRunTest indent_level test_statistics (RunTest name test_type (SomeImproving improving_result)) = do
     let progress_bar = testStatisticsProgressBar test_statistics
-    property_suceeded <- showImprovingTestResult (return ()) indent_level name progress_bar improving_result
-    return (updateTestStatistics (\count -> adjustTestCount test_type count mempty) property_suceeded test_statistics, RunTest name test_type property_suceeded)
+    (property_text, property_suceeded) <- showImprovingTestResult (return ()) indent_level name progress_bar improving_result
+    return (updateTestStatistics (\count -> adjustTestCount test_type count mempty) property_suceeded test_statistics, RunTest name test_type (property_text, property_suceeded))
 showRunTest indent_level test_statistics (RunTestGroup name tests) = do
     putDoc $ (indent indent_level (text name <> char ':')) <> linebreak
     fmap (second $ RunTestGroup name) $ showRunTests (indent_level + 2) test_statistics tests
@@ -68,7 +68,7 @@ consumeImprovingThing improving@(Finished _)       = [improving]
 consumeImprovingThing improving@(Improving _ rest) = improving : consumeImprovingThing rest
 
 
-showImprovingTestResult :: TestResultlike i r => IO () -> Int -> String -> Doc -> (i :~> r) -> IO Bool
+showImprovingTestResult :: TestResultlike i r => IO () -> Int -> String -> Doc -> (i :~> r) -> IO (String, Bool)
 showImprovingTestResult erase indent_level test_name progress_bar improving = do
     -- Update the screen every every 200ms
     improving_list <- consumeListInInterval 200000 (consumeImprovingThing improving)
@@ -78,7 +78,7 @@ showImprovingTestResult erase indent_level test_name progress_bar improving = do
         Just improving' -> do -- Display that new improving value to the user
             showImprovingTestResult' erase indent_level test_name progress_bar improving'
 
-showImprovingTestResult' :: TestResultlike i r => IO () -> Int -> String -> Doc -> (i :~> r) -> IO Bool
+showImprovingTestResult' :: TestResultlike i r => IO () -> Int -> String -> Doc -> (i :~> r) -> IO (String, Bool)
 showImprovingTestResult' erase indent_level test_name _ (Finished result) = do
     erase
     -- Output the final test status and a trailing newline
@@ -89,7 +89,7 @@ showImprovingTestResult' erase indent_level test_name _ (Finished result) = do
     clearLine
     -- Output any extra information that may be required, e.g. to show failure reason
     putDoc extra_doc
-    return success
+    return (show result, success)
   where
     success = testSucceeded result
     (result_doc, extra_doc) | success   = (brackets $ colorPass (text (show result)), empty)

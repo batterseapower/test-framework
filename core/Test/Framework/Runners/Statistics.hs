@@ -86,8 +86,8 @@ totalRunTestsList = mconcat . map totalRunTests
 gatherStatistics :: [FinishedTest] -> TestStatistics
 gatherStatistics = mconcat . map f
   where
-    f (RunTest _ test_type success) = singleTestStatistics test_type success
-    f (RunTestGroup _ tests)        = gatherStatistics tests
+    f (RunTest _ test_type (_, success)) = singleTestStatistics test_type success
+    f (RunTestGroup _ tests)             = gatherStatistics tests
 
     singleTestStatistics :: String -> Bool -> TestStatistics
     singleTestStatistics test_type success = TestStatistics {

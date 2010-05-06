@@ -18,11 +18,12 @@ import Data.Monoid
 -- | A test that has been executed or is in the process of execution
 data RunTest a = RunTest TestName TestTypeName a
                | RunTestGroup TestName [RunTest a]
+               deriving (Show)
 
 data SomeImproving = forall i r. TestResultlike i r => SomeImproving (i :~> r)
 type RunningTest = RunTest SomeImproving
 
-type FinishedTest = RunTest Bool
+type FinishedTest = RunTest (String, Bool)
 
 runTests :: CompleteRunnerOptions -- ^ Top-level runner options
          -> [Test]                -- ^ Tests to run
