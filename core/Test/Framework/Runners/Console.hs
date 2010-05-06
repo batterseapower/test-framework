@@ -12,6 +12,7 @@ import Test.Framework.Runners.Console.Utilities
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Runners.Processors
+import Test.Framework.Runners.Statistics
 import Test.Framework.Runners.TimedConsumption
 import Test.Framework.Seed
 import Test.Framework.Utilities
@@ -24,8 +25,6 @@ import System.IO
 
 import Text.PrettyPrint.ANSI.Leijen
 
-import Data.List
-import Data.Maybe
 import Data.Monoid
 
 import Control.Monad
