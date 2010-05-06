@@ -34,14 +34,19 @@ Library
                                 Test.Framework.Improving
                                 Test.Framework.Runners.Console.Colors
                                 Test.Framework.Runners.Console.ProgressBar
+                                Test.Framework.Runners.Console.Run
                                 Test.Framework.Runners.Console.Statistics
                                 Test.Framework.Runners.Console.Table
                                 Test.Framework.Runners.Console.Utilities
                                 Test.Framework.Runners.Core
                                 Test.Framework.Runners.Processors
+                                Test.Framework.Runners.Statistics
                                 Test.Framework.Runners.TestPattern
                                 Test.Framework.Runners.ThreadPool
                                 Test.Framework.Runners.TimedConsumption
+                                Test.Framework.Runners.XML.HostName
+                                Test.Framework.Runners.XML.JUnitWriter
+                                Test.Framework.Runners.XML
                                 Test.Framework.Utilities
         
         Build-Depends:          ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.4.0,
