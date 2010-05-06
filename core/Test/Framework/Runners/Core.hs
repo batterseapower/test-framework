@@ -11,9 +11,6 @@ import Test.Framework.Runners.ThreadPool
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
-import Control.Monad
-
-import Data.List
 import Data.Maybe
 import Data.Monoid
 
@@ -35,7 +32,7 @@ runTests ropts tests = do
         tests' | null test_patterns = tests
                | otherwise          = filterTests test_patterns [] tests
     (run_tests, actions) <- runTests' (unK $ ropt_test_options ropts) tests'
-    executeOnPool (unK $ ropt_threads ropts) actions
+    _ <- executeOnPool (unK $ ropt_threads ropts) actions
     return run_tests
 
 

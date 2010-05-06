@@ -21,7 +21,6 @@ import Text.PrettyPrint.ANSI.Leijen
 import Data.Monoid
 
 import Control.Arrow (second)
-import Control.Monad
 
 
 showRunTestsTop :: [RunningTest] -> IO [FinishedTest]

@@ -3,7 +3,6 @@ module Test.Framework.Runners.ThreadPool (
     ) where
 
 import Control.Concurrent
-import Control.Concurrent.Chan
 import Control.Monad
 
 import qualified Data.IntMap as IM
@@ -30,7 +29,7 @@ executeOnPool n actions = do
     -- that indicates they should terminate. We do this on another thread for
     -- maximum laziness (in case one the actions we are going to run depend on the
     -- output from previous actions..)
-    forkIO $ writeList2Chan input_chan (zipWith WorkerItem [0..] actions ++ replicate n WorkerTermination)
+    _ <- forkIO $ writeList2Chan input_chan (zipWith WorkerItem [0..] actions ++ replicate n WorkerTermination)
     
     -- Spawn workers
     forM_ [1..n] (const $ forkIO $ poolWorker input_chan output_chan)
