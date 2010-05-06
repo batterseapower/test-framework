@@ -5,12 +5,13 @@ module Test.Framework.Runners.XML (
 import Test.Framework.Runners.Statistics       ( testCountTotal, TestStatistics(..) )
 import Test.Framework.Runners.Core             ( FinishedTest )
 import Test.Framework.Runners.XML.JUnitWriter  ( RunDescription(..), serialize )
-import Test.Framework.Runners.XML.HostName     ( getHostName )
 
 import Data.Time.Format    ( formatTime )
 import Data.Time.LocalTime ( getZonedTime )
 
-import System.Locale ( defaultTimeLocale )
+import System.Locale       ( defaultTimeLocale )
+
+import Network.HostName    ( getHostName )
 
 
 produceReport :: TestStatistics -> [FinishedTest] -> IO String
