@@ -20,34 +20,36 @@ import Text.PrettyPrint.ANSI.Leijen
 
 import Data.Monoid
 
+import Control.Arrow (second)
 import Control.Monad
 
 
-showRunTestsTop :: TestStatistics -> [RunTest] -> IO TestStatistics
-showRunTestsTop test_statistics run_tests = hideCursorDuring $ do
-    -- Show those test results to the user as we get them
-    test_statistics' <- showRunTests 0 test_statistics run_tests
+showRunTestsTop :: [RunningTest] -> IO [FinishedTest]
+showRunTestsTop running_tests = hideCursorDuring $ do
+    -- Show those test results to the user as we get them. Gather statistics on the fly for a progress bar
+    let test_statistics = initialTestStatistics (totalRunTestsList running_tests)
+    (test_statistics', finished_tests) <- showRunTests 0 test_statistics running_tests
     
     -- Show the final statistics
     putStrLn ""
     putDoc $ showFinalTestStatistics test_statistics'
     
-    return test_statistics'
+    return finished_tests
 
 
 -- This code all /really/ sucks.  There must be a better way to seperate out the console-updating
 -- and the improvement-traversing concerns - but how?
-showRunTest :: Int -> TestStatistics -> RunTest -> IO TestStatistics
-showRunTest indent_level test_statistics (RunTest name test_type improving_result) = do
+showRunTest :: Int -> TestStatistics -> RunningTest -> IO (TestStatistics, FinishedTest)
+showRunTest indent_level test_statistics (RunTest name test_type (SomeImproving improving_result)) = do
     let progress_bar = testStatisticsProgressBar test_statistics
     property_suceeded <- showImprovingTestResult (return ()) indent_level name progress_bar improving_result
-    return $ updateTestStatistics (\count -> adjustTestCount test_type count mempty) property_suceeded test_statistics
+    return (updateTestStatistics (\count -> adjustTestCount test_type count mempty) property_suceeded test_statistics, RunTest name test_type property_suceeded)
 showRunTest indent_level test_statistics (RunTestGroup name tests) = do
     putDoc $ (indent indent_level (text name <> char ':')) <> linebreak
-    showRunTests (indent_level + 2) test_statistics tests
+    fmap (second $ RunTestGroup name) $ showRunTests (indent_level + 2) test_statistics tests
 
-showRunTests :: Int -> TestStatistics -> [RunTest] -> IO TestStatistics
-showRunTests indent_level = foldM (showRunTest indent_level)
+showRunTests :: Int -> TestStatistics -> [RunningTest] -> IO (TestStatistics, [FinishedTest])
+showRunTests indent_level = mapAccumLM (showRunTest indent_level)
 
 
 testStatisticsProgressBar :: TestStatistics -> Doc

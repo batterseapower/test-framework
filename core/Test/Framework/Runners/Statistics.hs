@@ -1,10 +1,12 @@
 module Test.Framework.Runners.Statistics (
         TestCount, testCountTestTypes, testCountForType, adjustTestCount, testCountTotal,
         TestStatistics(..), ts_pending_tests, ts_no_failures,
-        initialTestStatistics, updateTestStatistics
+        initialTestStatistics, updateTestStatistics,
+        totalRunTestsList, gatherStatistics
   ) where
 
 import Test.Framework.Core (TestTypeName)
+import Test.Framework.Runners.Core
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -46,6 +48,10 @@ data TestStatistics = TestStatistics {
         ts_failed_tests :: TestCount
     }
 
+instance Monoid TestStatistics where
+    mempty = TestStatistics mempty mempty mempty mempty
+    mappend (TestStatistics tot1 run1 pas1 fai1) (TestStatistics tot2 run2 pas2 fai2) = TestStatistics (tot1 `mappend` tot2) (run1 `mappend` run2) (pas1 `mappend` pas2) (fai1 `mappend` fai2)
+
 ts_pending_tests :: TestStatistics -> TestCount
 ts_pending_tests ts = ts_total_tests ts `minusTestCount` ts_run_tests ts
 
@@ -68,3 +74,26 @@ updateTestStatistics count_constructor test_suceeded test_statistics = test_stat
         ts_failed_tests = ts_failed_tests test_statistics `mappend` (count_constructor (if test_suceeded then 0 else 1)),
         ts_passed_tests = ts_passed_tests test_statistics `mappend` (count_constructor (if test_suceeded then 1 else 0))
     }
+
+
+totalRunTests :: RunTest a -> TestCount
+totalRunTests (RunTest _ test_type _) = adjustTestCount test_type 1 mempty
+totalRunTests (RunTestGroup _ tests)  = totalRunTestsList tests
+
+totalRunTestsList :: [RunTest a] -> TestCount
+totalRunTestsList = mconcat . map totalRunTests
+
+gatherStatistics :: [FinishedTest] -> TestStatistics
+gatherStatistics = mconcat . map f
+  where
+    f (RunTest _ test_type success) = singleTestStatistics test_type success
+    f (RunTestGroup _ tests)        = gatherStatistics tests
+
+    singleTestStatistics :: String -> Bool -> TestStatistics
+    singleTestStatistics test_type success = TestStatistics {
+            ts_total_tests = one,
+            ts_run_tests = one,
+            ts_passed_tests = if success then one else mempty,
+            ts_failed_tests = if success then mempty else one
+        }
+      where one = adjustTestCount test_type 1 mempty

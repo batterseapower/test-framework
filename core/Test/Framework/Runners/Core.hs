@@ -1,5 +1,5 @@
 module Test.Framework.Runners.Core (
-        RunTest(..), runTests
+        RunTest(..), RunningTest, SomeImproving(..), FinishedTest, runTests,
     ) where
 
 import Test.Framework.Core
@@ -18,13 +18,18 @@ import Data.Maybe
 import Data.Monoid
 
 
--- | A test that has been executed
-data RunTest = forall i r. TestResultlike i r => RunTest TestName TestTypeName (i :~> r)
-             | RunTestGroup TestName [RunTest]
+-- | A test that has been executed or is in the process of execution
+data RunTest a = RunTest TestName TestTypeName a
+               | RunTestGroup TestName [RunTest a]
+
+data SomeImproving = forall i r. TestResultlike i r => SomeImproving (i :~> r)
+type RunningTest = RunTest SomeImproving
+
+type FinishedTest = RunTest Bool
 
 runTests :: CompleteRunnerOptions -- ^ Top-level runner options
          -> [Test]                -- ^ Tests to run
-         -> IO [RunTest]
+         -> IO [RunningTest]
 runTests ropts tests = do
     let test_patterns = unK $ ropt_test_patterns ropts
         tests' | null test_patterns = tests
@@ -50,14 +55,14 @@ filterTest patterns path (PlusTestOptions topts inner_test)
   = fmap (PlusTestOptions topts) (filterTest patterns path inner_test)
 
 
-runTest' :: TestOptions -> Test -> IO (RunTest, [IO ()])
+runTest' :: TestOptions -> Test -> IO (RunningTest, [IO ()])
 runTest' topts (Test name testlike) = do
     (result, action) <- runTest (completeTestOptions topts) testlike
-    return (RunTest name (testTypeName testlike) result, [action])
+    return (RunTest name (testTypeName testlike) (SomeImproving result), [action])
 runTest' topts (TestGroup name tests) = fmap (onLeft (RunTestGroup name)) $ runTests' topts tests
 runTest' topts (PlusTestOptions extra_topts test) = runTest' (topts `mappend` extra_topts) test
 
-runTests' :: TestOptions -> [Test] -> IO ([RunTest], [IO ()])
+runTests' :: TestOptions -> [Test] -> IO ([RunningTest], [IO ()])
 runTests' topts = fmap (onRight concat . unzip) . mapM (runTest' topts)
 
 

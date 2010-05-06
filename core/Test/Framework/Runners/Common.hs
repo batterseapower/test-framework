@@ -4,7 +4,7 @@ module Test.Framework.Runners.Common (
 
 import Test.Framework.Core
 import Test.Framework.Options
-import Test.Framework.Runners.Console
+import qualified Test.Framework.Runners.Console as Console
 import Test.Framework.Runners.Core
 import Test.Framework.Runners.Options
 import Test.Framework.Runners.Processors
@@ -92,13 +92,13 @@ defaultMainWithOpts tests ropts = do
     let ropts' = completeRunnerOptions ropts
     
     -- Get a lazy list of the test results, as executed in parallel
-    run_tests <- runTests ropts' tests
+    running_tests <- runTests ropts' tests
     
     -- Show those test results to the user as we get them
-    let test_statistics = initialTestStatistics (totalRunTestsList run_tests)
-    test_statistics' <- showRunTestsTop test_statistics run_tests
+    run_tests <- Console.showRunTestsTop running_tests
     
     -- Set the error code depending on whether the tests succeded or not
+    let test_statistics' = gatherStatistics run_tests
     exitWith $ if ts_no_failures test_statistics'
                then ExitSuccess
                else ExitFailure 1
@@ -110,11 +110,3 @@ completeRunnerOptions ro = RunnerOptions {
             ropt_test_options = K $ ropt_test_options ro `orElse` mempty,
             ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty
         }
-
-
-totalRunTests :: RunTest -> TestCount
-totalRunTests (RunTest _ test_type _) = adjustTestCount test_type 1 mempty
-totalRunTests (RunTestGroup _ tests)  = totalRunTestsList tests
-
-totalRunTestsList :: [RunTest] -> TestCount
-totalRunTestsList = mconcat . map totalRunTests
