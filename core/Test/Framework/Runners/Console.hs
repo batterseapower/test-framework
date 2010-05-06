@@ -151,7 +151,7 @@ showRunTests indent_level = foldM (showRunTest indent_level)
 
 
 testStatisticsProgressBar :: TestStatistics -> Doc
-testStatisticsProgressBar test_statistics = progressBar (colorPassOrFail no_failures) width (Progress run_tests total_tests)
+testStatisticsProgressBar test_statistics = progressBar (colorPassOrFail no_failures) terminal_width (Progress run_tests total_tests)
   where
     run_tests   = testCountTotal (ts_run_tests test_statistics)
     total_tests = testCountTotal (ts_total_tests test_statistics)
@@ -159,7 +159,7 @@ testStatisticsProgressBar test_statistics = progressBar (colorPassOrFail no_fail
     -- We assume a terminal width of 80, but we can't make the progress bar 80 characters wide.  Why?  Because if we
     -- do so, when we write the progress bar out Windows will move the cursor onto the next line!  By using a slightly
     -- smaller width we prevent this from happening.  Bit of a hack, but it does the job.
-    width = 79
+    terminal_width = 79
 
 updateTestStatistics :: (Int -> TestCount) -> Bool -> TestStatistics -> TestStatistics
 updateTestStatistics count_constructor test_suceeded test_statistics = test_statistics {
