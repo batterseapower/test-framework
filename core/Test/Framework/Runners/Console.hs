@@ -16,6 +16,7 @@ import Test.Framework.Utilities
 import System.Console.GetOpt
 import System.Environment
 import System.Exit
+import System.IO
 
 import Data.Monoid
 
@@ -85,10 +86,10 @@ defaultMainWithArgs tests args = do
     case interpreted_args of
         Right (ropts, [])    -> defaultMainWithOpts tests ropts
         Right (_, leftovers) -> do
-            putStrLn $ "Could not understand these extra arguments: " ++ unwords leftovers
+            hPutStrLn stderr $ "Could not understand these extra arguments: " ++ unwords leftovers
             exitWith (ExitFailure 1)
         Left error_message   -> do
-            putStrLn error_message
+            hPutStrLn stderr error_message
             exitWith (ExitFailure 1)
 
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
