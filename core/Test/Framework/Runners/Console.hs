@@ -61,8 +61,11 @@ optionsDescription = [
             (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "TEST-PATTERN")
             "only tests that match at least one glob pattern given by an instance of this argument will be run",
         Option [] ["jxml"]
-            (OptArg (\t -> mempty { ropt_xml_output = Just (Just t) }) "FILE")
-            "Set the output format to junit-xml, and (optionally) writes to FILE instead of STDOUT"
+            (ReqArg (\t -> mempty { ropt_xml_output = Just (Just t) }) "FILE")
+            "write a junit-xml summary of the output to FILE",
+        Option [] ["plain"]
+            (NoArg (mempty { ropt_plain_output = Just True }))
+            "do not use any ANSI terminal features to display the test run"
     ]
 
 interpretArgs :: [String] -> IO (Either String (RunnerOptions, [String]))
@@ -100,12 +103,12 @@ defaultMainWithOpts tests ropts = do
     running_tests <- runTests ropts' tests
     
     -- Show those test results to the user as we get them
-    fin_tests <- showRunTestsTop running_tests
+    fin_tests <- showRunTestsTop (unK $ ropt_plain_output ropts') running_tests
     let test_statistics' = gatherStatistics fin_tests
     
     -- Output XML report (if requested)
     case ropt_xml_output ropts' of
-        K (Just mb_file) -> XML.produceReport test_statistics' fin_tests >>= maybe putStrLn writeFile mb_file
+        K (Just file) -> XML.produceReport test_statistics' fin_tests >>= writeFile file
         _ -> return ()
     
     -- Set the error code depending on whether the tests succeded or not
@@ -119,5 +122,6 @@ completeRunnerOptions ro = RunnerOptions {
             ropt_threads = K $ ropt_threads ro `orElse` processorCount,
             ropt_test_options = K $ ropt_test_options ro `orElse` mempty,
             ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty,
-            ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing
+            ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing,
+            ropt_plain_output = K $ ropt_plain_output ro `orElse` False
         }

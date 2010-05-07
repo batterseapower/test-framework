@@ -1,5 +1,5 @@
 module Test.Framework.Improving (
-        (:~>)(..), 
+        (:~>)(..), bimapImproving, improvingLast, consumeImproving,
         ImprovingIO, yieldImprovement, runImprovingIO, liftIO,
         timeoutImprovingIO, maybeTimeoutImprovingIO
     ) where
@@ -16,6 +16,18 @@ data i :~> f = Finished f
 instance Functor ((:~>) i) where
     fmap f (Finished x)    = Finished (f x)
     fmap f (Improving x i) = Improving x (fmap f i)
+
+bimapImproving :: (a -> c) -> (b -> d) -> (a :~> b) -> (c :~> d)
+bimapImproving _ g (Finished b)            = Finished (g b)
+bimapImproving f g (Improving a improving) = Improving (f a) (bimapImproving f g improving)
+
+improvingLast :: (a :~> b) -> b
+improvingLast (Finished r)       = r
+improvingLast (Improving _ rest) = improvingLast rest
+
+consumeImproving :: (a :~> b) -> [(a :~> b)]
+consumeImproving improving@(Finished _)       = [improving]
+consumeImproving improving@(Improving _ rest) = improving : consumeImproving rest
 
 
 newtype ImprovingIO i f a = IIO { unIIO :: Chan (Either i f) -> IO a }
