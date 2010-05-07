@@ -1,2 +1,3 @@
-:set -XCPP -XPatternGuards -XExistentialQuantification -XRecursiveDo -XFlexibleInstances -XTypeOperators -XFunctionalDependencies -XMultiParamTypeClasses
+:set -XCPP -XPatternGuards -XExistentialQuantification -XRecursiveDo -XFlexibleInstances -XTypeOperators -XFunctionalDependencies -XMultiParamTypeClasses -XTypeSynonymInstances
 :set -Wall
+:set -DTEST
