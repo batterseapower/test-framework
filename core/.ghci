@@ -1,0 +1,2 @@
+:set -XCPP -XPatternGuards -XExistentialQuantification -XRecursiveDo -XFlexibleInstances -XTypeOperators -XFunctionalDependencies -XMultiParamTypeClasses
+:set -Wall
