@@ -1,5 +1,5 @@
 Name:                test-framework-hunit
-Version:             0.2.4
+Version:             0.2.5
 Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            HUnit support for the test-framework package.
@@ -22,7 +22,7 @@ Flag Base3
 Library
         Exposed-Modules:        Test.Framework.Providers.HUnit
         
-        Build-Depends:          test-framework >= 0.2.0, HUnit >= 1.2 && < 2, extensible-exceptions >= 0.1.1
+        Build-Depends:          test-framework >= 0.2.0 && < 0.4.0, HUnit >= 1.2 && < 2, extensible-exceptions >= 0.1.1 && < 0.2.0
         if flag(base3)
                 Build-Depends:          base >= 3 && < 4
         else
