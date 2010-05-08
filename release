@@ -1,6 +1,11 @@
 #!/bin/bash
 #
 
+if [ "$(git branch | grep '* ')" != "* master" ]; then
+    echo "You are not on the master branch!"
+    exit 1
+fi
+
 echo "Have you updated the version number? Type 'yes' if you have!"
 read version_response
 
