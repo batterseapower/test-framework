@@ -24,10 +24,10 @@ Library
         
         Build-Depends:          test-framework >= 0.2.0, QuickCheck >= 1.1 && < 2, extensible-exceptions >= 0.1.1 && < 0.2.0
         if flag(base3)
-                Build-Depends:          base >= 3 && < 4, random >= 1, parallel >= 1
+                Build-Depends:          base >= 3 && < 4, random >= 1, deepseq >= 1.1 && < 1.2
         else
                 if flag(base4)
-                        Build-Depends:          base >= 4 && < 5, random >= 1, parallel >= 1
+                        Build-Depends:          base >= 4 && < 5, random >= 1, deepseq >= 1.1 && < 1.2
         
         Extensions:             TypeSynonymInstances
                                 TypeOperators

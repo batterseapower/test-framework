@@ -10,7 +10,7 @@ import Test.Framework.Providers.API
 import Test.QuickCheck hiding (Property)
 
 import qualified Control.Exception.Extensible as E
-import Control.Parallel.Strategies (rnf)
+import Control.DeepSeq (rnf)
 
 import Data.List
 
