@@ -24,7 +24,7 @@ import Control.Arrow (second, (&&&))
 
 
 showRunTestsTop :: Bool -> [RunningTest] -> IO [FinishedTest]
-showRunTestsTop isplain running_tests = hideCursorDuring $ do
+showRunTestsTop isplain running_tests = (if isplain then id else hideCursorDuring) $ do
     -- Show those test results to the user as we get them. Gather statistics on the fly for a progress bar
     let test_statistics = initialTestStatistics (totalRunTestsList running_tests)
     (test_statistics', finished_tests) <- showRunTests isplain 0 test_statistics running_tests
