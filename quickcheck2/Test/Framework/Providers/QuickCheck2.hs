@@ -100,7 +100,7 @@ initialState topts = do
     
     -- My code is very careful not to write to the terminal since it will screw up my own
     -- output code, but I need to fill in the terminal field anyway
-    tm <- newTerminal
+    tm <- newStdioTerminal
     
     let max_success = unK $ topt_maximum_generated_tests topts
         max_size = maxSize stdArgs -- Maximum generated value size currently not configurable
@@ -114,7 +114,6 @@ initialState topts = do
         , collected         = []
         , expectedFailure   = False
         , randomSeed        = gen
-        , isShrinking       = False
         , numSuccessShrinks = 0
         , numTryShrinks     = 0 })
 
@@ -132,7 +131,7 @@ myRunATest st f = do
     let size = computeSize st (numSuccessTests st) (numDiscardedTests st)
     -- Careful to catch exceptions, or else they might bring down the whole test framework
     ei_st_res <- liftIO $ flip E.catch (\e -> return $ Left $ show (e :: E.SomeException)) $ do
-                                  MkRose mres ts <- protectRose (unProp (f rnd1 size))
+                                  (mres, ts) <- unpackRose (unProp (f rnd1 size))
                                   res <- mres
                                   return (Right (res, ts))
                                   
@@ -167,7 +166,7 @@ myRunATest st f = do
 
 -- | This function eventually reports a failure but attempts to shrink the counterexample before it does so
 myFoundFailure :: State -> Result -> [Rose (IO Result)] -> IO (PropertyStatus, PropertyTestCount)
-myFoundFailure st res ts = myLocalMin st{ numTryShrinks = 0, isShrinking = True } res ts
+myFoundFailure st res ts = myLocalMin st{ numTryShrinks = 0 } res ts
 
 myLocalMin :: State -> Result -> [Rose (IO Result)] -> IO (PropertyStatus, PropertyTestCount)
 myLocalMin st res [] = do
@@ -176,7 +175,7 @@ myLocalMin st res [] = do
     return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
 
 myLocalMin st res (t : ts) =
-  do MkRose mres' ts' <- protectRose t
+  do (mres', ts') <- unpackRose t
      res' <- mres'
      callbackPostTest st res'
      
