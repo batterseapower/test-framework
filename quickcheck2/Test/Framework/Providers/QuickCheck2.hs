@@ -12,8 +12,9 @@ module Test.Framework.Providers.QuickCheck2 (
 import Test.Framework.Providers.API
 
 import Test.QuickCheck.Gen
-import Test.QuickCheck.Property hiding ( Property )
-import Test.QuickCheck.Test ( maxSize, stdArgs, callbackPostTest, callbackPostFinalFailure )
+import Test.QuickCheck.Property hiding ( Property, Result( reason, interrupted ) )
+import qualified Test.QuickCheck.Property as P
+import Test.QuickCheck.Test
 import Test.QuickCheck.Text
 import Test.QuickCheck.State
 
@@ -131,8 +132,7 @@ myRunATest st f = do
     let size = computeSize st (numSuccessTests st) (numDiscardedTests st)
     -- Careful to catch exceptions, or else they might bring down the whole test framework
     ei_st_res <- liftIO $ flip E.catch (\e -> return $ Left $ show (e :: E.SomeException)) $ do
-                                  (mres, ts) <- unpackRose (unProp (f rnd1 size))
-                                  res <- mres
+                                  MkRose res ts <- protectRose (reduceRose (unProp (f rnd1 size)))
                                   return (Right (res, ts))
                                   
     case ei_st_res of
@@ -140,21 +140,21 @@ myRunATest st f = do
        Right (res, ts) -> do
            liftIO $ callbackPostTest st res
     
-           case ok res of
-              Just True -> -- successful test
+           case res of
+              MkResult{ok = Just True, stamp = stamp, expect = expect} -> -- successful test
                 do myTest st{ numSuccessTests = numSuccessTests st + 1
                             , randomSeed      = rnd2
-                            , collected       = stamp res : collected st
-                            , expectedFailure = expect res
+                            , collected       = stamp : collected st
+                            , expectedFailure = expect
                             } f
        
-              Nothing -> -- discarded test
+              MkResult{ok = Nothing, expect = expect} -> -- discarded test
                 do myTest st{ numDiscardedTests = numDiscardedTests st + 1
                             , randomSeed        = rnd2
-                            , expectedFailure   = expect res
+                            , expectedFailure   = expect
                             } f
          
-              Just False -> -- failed test
+              MkResult{ok = Just False} -> -- failed test
                 do if expect res
                      then liftIO $ myFoundFailure st res ts
                           -- Could terminate immediately without any shrinking by doing this instead:
@@ -165,23 +165,48 @@ myRunATest st f = do
 
 
 -- | This function eventually reports a failure but attempts to shrink the counterexample before it does so
-myFoundFailure :: State -> Result -> [Rose (IO Result)] -> IO (PropertyStatus, PropertyTestCount)
-myFoundFailure st res ts = myLocalMin st{ numTryShrinks = 0 } res ts
+myFoundFailure :: State -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
+myFoundFailure st res ts =
+  do myLocalMin st{ numTryShrinks = 0 } res ts
 
-myLocalMin :: State -> Result -> [Rose (IO Result)] -> IO (PropertyStatus, PropertyTestCount)
-myLocalMin st res [] = do
-    callbackPostFinalFailure st res
-    -- NB: could use (numSuccessShrinks st) in the message somehow
-    return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
+myLocalMin :: State -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
+myLocalMin st res _ | P.interrupted res = myLocalMinFound st res
+myLocalMin st res ts = do
+    r <- tryEvaluate ts
+    case r of
+      Left err ->
+        myLocalMinFound st
+           (exception "Exception while generating shrink-list" err) { callbacks = callbacks res }
+      Right ts' -> myLocalMin' st res ts'
 
-myLocalMin st res (t : ts) =
-  do (mres', ts') <- unpackRose t
-     res' <- mres'
-     callbackPostTest st res'
-     
-     -- NB: both (numSuccessShrinks st) (numTryShrinks st) contain interesting information here.
-     -- I'm not going to output any message at all here (unlike QuickCheck2) because I want a
-     -- single error message I can give to the user.
-     if ok res' == Just False
-       then myFoundFailure st{ numSuccessShrinks = numSuccessShrinks st + 1 } res' ts'
-       else myLocalMin st{ numTryShrinks = numTryShrinks st + 1 } res ts
+
+myLocalMin' :: State -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
+myLocalMin' st res [] = myLocalMinFound st res
+myLocalMin' st res (t:ts) =
+  do -- CALLBACK before_test
+    MkRose res' ts' <- protectRose (reduceRose t)
+    callbackPostTest st res'
+    -- NB: both (numSuccessShrinks st) (numTryShrinks st) contain interesting information here.
+    -- I'm not going to output any message at all here (unlike QuickCheck2) because I want a
+    -- single error message I can give to the user.
+    if ok res' == Just False
+      then myFoundFailure st{ numSuccessShrinks = numSuccessShrinks st + 1 } res' ts'
+      else myLocalMin st{ numTryShrinks = numTryShrinks st + 1 } res ts
+
+myLocalMinFound :: State -> P.Result -> IO (PropertyStatus, PropertyTestCount)
+myLocalMinFound st res =
+  do callbackPostFinalFailure st res
+     -- NB: could use (numSuccessShrinks st) in the message somehow
+     return (PropertyFalsifiable (P.reason res), numSuccessTests st + 1)
+
+
+--
+-- Hidden module Test.QuickCheck.Exception
+--
+
+tryEvaluate :: a -> IO (Either E.SomeException a)
+tryEvaluate x = tryEvaluateIO (return x)
+
+tryEvaluateIO :: IO a -> IO (Either E.SomeException a)
+tryEvaluateIO m = E.try (m >>= E.evaluate)
+--tryEvaluateIO m = Right `fmap` m

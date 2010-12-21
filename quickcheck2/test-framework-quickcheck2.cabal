@@ -1,5 +1,5 @@
 Name:                test-framework-quickcheck2
-Version:             0.2.8
+Version:             0.2.9
 Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            QuickCheck2 support for the test-framework package.
@@ -22,7 +22,7 @@ Flag Base3
 Library
         Exposed-Modules:        Test.Framework.Providers.QuickCheck2
         
-        Build-Depends:          test-framework >= 0.2.0 && < 0.4.0, QuickCheck >= 2.3 && < 2.4, extensible-exceptions >= 0.1.1 && < 0.2.0
+        Build-Depends:          test-framework >= 0.2.0 && < 0.4.0, QuickCheck >= 2.4 && < 2.5, extensible-exceptions >= 0.1.1 && < 0.2.0
         if flag(base3)
                 Build-Depends:          base >= 3 && < 4, random >= 1
         else
