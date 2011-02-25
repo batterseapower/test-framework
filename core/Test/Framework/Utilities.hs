@@ -1,7 +1,11 @@
 module Test.Framework.Utilities where
 
+import Control.Arrow (first, second)
+
+import Data.Function (on)
 import Data.Maybe
 import Data.Monoid
+import Data.List (intercalate)
 
 
 newtype K a = K { unK :: a }
@@ -17,16 +21,16 @@ listToMaybeLast :: [a] -> Maybe a
 listToMaybeLast = listToMaybe . reverse
 
 mappendBy :: Monoid b => (a -> b) -> a -> a -> b
-mappendBy f left right = (f left) `mappend` (f right)
+mappendBy f = mappend `on` f
 
 orElse :: Maybe a -> a -> a
 orElse = flip fromMaybe
 
 onLeft :: (a -> c) -> (a, b) -> (c, b)
-onLeft f (x, y) = (f x, y)
+onLeft = first
 
 onRight :: (b -> c) -> (a, b) -> (a, c)
-onRight f (x, y) = (x, f y)
+onRight = second
 
 -- | Like 'unlines', but does not append a trailing newline if there
 -- is at least one line.  For example:
@@ -42,9 +46,7 @@ onRight f (x, y) = (x, f y)
 -- This is closer to the behaviour of 'unwords', which does not append
 -- a trailing space.
 unlinesConcise :: [String] -> String
-unlinesConcise []     = []
-unlinesConcise [l]    = l
-unlinesConcise (l:ls) = l ++ '\n' : unlinesConcise ls
+unlinesConcise = intercalate "\n"
 
 mapAccumLM :: Monad m => (acc -> x -> m (acc, y)) -> acc -> [x] -> m (acc, [y])
 mapAccumLM _ acc [] = return (acc, [])
