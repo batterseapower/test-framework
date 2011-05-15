@@ -1,5 +1,6 @@
 module Test.Framework.Runners.Console (
-        defaultMain, defaultMainWithArgs, defaultMainWithOpts
+        defaultMain, defaultMainWithArgs, defaultMainWithOpts,
+        interpretArgs, interpretArgsOrExit
     ) where
 
 import Test.Framework.Core
@@ -65,9 +66,14 @@ optionsDescription = [
             "write a junit-xml summary of the output to FILE",
         Option [] ["plain"]
             (NoArg (mempty { ropt_plain_output = Just True }))
-            "do not use any ANSI terminal features to display the test run"
+            "do not use any ANSI terminal features to display the test run",
+        Option [] ["hide-successes"]
+            (NoArg (mempty { ropt_hide_successes = Just True }))
+            "hide sucessful tests, and only show failures"
     ]
 
+-- | Parse the specified command line arguments into a 'RunnerOptions' and some remaining arguments,
+-- or return a reason as to why we can't.
 interpretArgs :: [String] -> IO (Either String (RunnerOptions, [String]))
 interpretArgs args = do
     prog_name <- getProgName
@@ -77,17 +83,12 @@ interpretArgs args = do
         (oas, n, []) | Just os <- sequence oas -> return $ Right (mconcat os, n)
         (_, _, errs)                           -> return $ Left (concat errs ++ usageInfo usage_header optionsDescription)
 
-
-defaultMain :: [Test] -> IO ()
-defaultMain tests = do
-    args <- getArgs
-    defaultMainWithArgs tests args
-
-defaultMainWithArgs :: [Test] -> [String] -> IO ()
-defaultMainWithArgs tests args = do
+-- | A version of 'interpretArgs' that ends the process if it fails.
+interpretArgsOrExit :: [String] -> IO RunnerOptions
+interpretArgsOrExit args = do
     interpreted_args <- interpretArgs args
     case interpreted_args of
-        Right (ropts, [])    -> defaultMainWithOpts tests ropts
+        Right (ropts, [])    -> return ropts
         Right (_, leftovers) -> do
             hPutStrLn stderr $ "Could not understand these extra arguments: " ++ unwords leftovers
             exitWith (ExitFailure 1)
@@ -95,6 +96,21 @@ defaultMainWithArgs tests args = do
             hPutStrLn stderr error_message
             exitWith (ExitFailure 1)
 
+
+defaultMain :: [Test] -> IO ()
+defaultMain tests = do
+    args <- getArgs
+    defaultMainWithArgs tests args
+
+-- | A version of 'defaultMain' that lets you ignore the command line arguments
+-- in favour of another list of 'String's.
+defaultMainWithArgs :: [Test] -> [String] -> IO ()
+defaultMainWithArgs tests args = do
+    ropts <- interpretArgsOrExit args
+    defaultMainWithOpts tests ropts
+
+-- | A version of 'defaultMain' that lets you ignore the command line arguments
+-- in favour of an explicit set of 'RunnerOptions'.
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
 defaultMainWithOpts tests ropts = do
     let ropts' = completeRunnerOptions ropts
@@ -103,7 +119,7 @@ defaultMainWithOpts tests ropts = do
     running_tests <- runTests ropts' tests
     
     -- Show those test results to the user as we get them
-    fin_tests <- showRunTestsTop (unK $ ropt_plain_output ropts') running_tests
+    fin_tests <- showRunTestsTop (unK $ ropt_plain_output ropts') (unK $ ropt_hide_successes ropts') running_tests
     let test_statistics' = gatherStatistics fin_tests
     
     -- Output XML report (if requested)
@@ -123,5 +139,6 @@ completeRunnerOptions ro = RunnerOptions {
             ropt_test_options = K $ ropt_test_options ro `orElse` mempty,
             ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty,
             ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing,
-            ropt_plain_output = K $ ropt_plain_output ro `orElse` False
+            ropt_plain_output = K $ ropt_plain_output ro `orElse` False,
+            ropt_hide_successes = K $ ropt_hide_successes ro `orElse` False
         }

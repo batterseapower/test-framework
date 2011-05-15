@@ -21,13 +21,14 @@ import Text.PrettyPrint.ANSI.Leijen
 import Data.Monoid
 
 import Control.Arrow (second, (&&&))
+import Control.Monad (unless)
 
 
-showRunTestsTop :: Bool -> [RunningTest] -> IO [FinishedTest]
-showRunTestsTop isplain running_tests = (if isplain then id else hideCursorDuring) $ do
+showRunTestsTop :: Bool -> Bool -> [RunningTest] -> IO [FinishedTest]
+showRunTestsTop isplain hide_successes running_tests = (if isplain then id else hideCursorDuring) $ do
     -- Show those test results to the user as we get them. Gather statistics on the fly for a progress bar
     let test_statistics = initialTestStatistics (totalRunTestsList running_tests)
-    (test_statistics', finished_tests) <- showRunTests isplain 0 test_statistics running_tests
+    (test_statistics', finished_tests) <- showRunTests isplain hide_successes 0 test_statistics running_tests
     
     -- Show the final statistics
     putStrLn ""
@@ -38,17 +39,17 @@ showRunTestsTop isplain running_tests = (if isplain then id else hideCursorDurin
 
 -- This code all /really/ sucks.  There must be a better way to seperate out the console-updating
 -- and the improvement-traversing concerns - but how?
-showRunTest :: Bool -> Int -> TestStatistics -> RunningTest -> IO (TestStatistics, FinishedTest)
-showRunTest isplain indent_level test_statistics (RunTest name test_type (SomeImproving improving_result)) = do
+showRunTest :: Bool -> Bool -> Int -> TestStatistics -> RunningTest -> IO (TestStatistics, FinishedTest)
+showRunTest isplain hide_successes indent_level test_statistics (RunTest name test_type (SomeImproving improving_result)) = do
     let progress_bar = testStatisticsProgressBar test_statistics
-    (property_text, property_suceeded) <- showImprovingTestResult isplain indent_level name progress_bar improving_result
+    (property_text, property_suceeded) <- showImprovingTestResult isplain hide_successes indent_level name progress_bar improving_result
     return (updateTestStatistics (\count -> adjustTestCount test_type count mempty) property_suceeded test_statistics, RunTest name test_type (property_text, property_suceeded))
-showRunTest isplain indent_level test_statistics (RunTestGroup name tests) = do
+showRunTest isplain hide_successes indent_level test_statistics (RunTestGroup name tests) = do
     putDoc $ (indent indent_level (text name <> char ':')) <> linebreak
-    fmap (second $ RunTestGroup name) $ showRunTests isplain (indent_level + 2) test_statistics tests
+    fmap (second $ RunTestGroup name) $ showRunTests isplain hide_successes (indent_level + 2) test_statistics tests
 
-showRunTests :: Bool -> Int -> TestStatistics -> [RunningTest] -> IO (TestStatistics, [FinishedTest])
-showRunTests isplain indent_level = mapAccumLM (showRunTest isplain indent_level)
+showRunTests :: Bool -> Bool -> Int -> TestStatistics -> [RunningTest] -> IO (TestStatistics, [FinishedTest])
+showRunTests isplain hide_successes indent_level = mapAccumLM (showRunTest isplain hide_successes indent_level)
 
 
 testStatisticsProgressBar :: TestStatistics -> Doc
@@ -63,19 +64,20 @@ testStatisticsProgressBar test_statistics = progressBar (colorPassOrFail no_fail
     terminal_width = 79
 
 
-showImprovingTestResult :: TestResultlike i r => Bool -> Int -> String -> Doc -> (i :~> r) -> IO (String, Bool)
-showImprovingTestResult isplain indent_level test_name progress_bar improving = do
+showImprovingTestResult :: TestResultlike i r => Bool -> Bool -> Int -> String -> Doc -> (i :~> r) -> IO (String, Bool)
+showImprovingTestResult isplain hide_successes indent_level test_name progress_bar improving = do
     -- Consume the improving value until the end, displaying progress if we are not in "plain" mode
     (result, success) <- if isplain then return $ improvingLast improving'
                                     else showImprovingTestResultProgress (return ()) indent_level test_name progress_bar improving'
-    let (result_doc, extra_doc) | success   = (brackets $ colorPass (text result), empty)
-                                | otherwise = (brackets (colorFail (text "Failed")), text result <> linebreak)
-  
-    -- Output the final test status and a trailing newline
-    putTestHeader indent_level test_name (possiblyPlain isplain result_doc)
-    -- Output any extra information that may be required, e.g. to show failure reason
-    putDoc extra_doc
-    
+    unless (success && hide_successes) $ do
+        let (result_doc, extra_doc) | success   = (brackets $ colorPass (text result), empty)
+                                    | otherwise = (brackets (colorFail (text "Failed")), text result <> linebreak)
+        
+        -- Output the final test status and a trailing newline
+        putTestHeader indent_level test_name (possiblyPlain isplain result_doc)
+        -- Output any extra information that may be required, e.g. to show failure reason
+        putDoc extra_doc
+
     return (result, success)
   where
     improving' = bimapImproving show (show &&& testSucceeded) improving
