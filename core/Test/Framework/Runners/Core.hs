@@ -30,38 +30,28 @@ runTests :: CompleteRunnerOptions -- ^ Top-level runner options
          -> IO [RunningTest]
 runTests ropts tests = do
     let test_patterns = unK $ ropt_test_patterns ropts
-        tests' | null test_patterns = tests
-               | otherwise          = filterTests test_patterns [] tests
-    (run_tests, actions) <- runTests' (unK $ ropt_test_options ropts) tests'
+        use_test path name = null test_patterns || any (`testPatternMatches` (path ++ [name])) test_patterns
+    (run_tests, actions) <- runTests' use_test [] (unK $ ropt_test_options ropts) tests
     _ <- executeOnPool (unK $ ropt_threads ropts) actions
     return run_tests
 
 
-filterTests :: [TestPattern] -> [String] -> [Test] -> [Test]
-filterTests patterns path = mapMaybe (filterTest patterns path)
-
-filterTest :: [TestPattern] -> [String] -> Test -> Maybe Test
-filterTest patterns path test@(Test name _)
-  | any (`testPatternMatches` (path ++ [name])) patterns = Just test
-  | otherwise                                            = Nothing
-filterTest patterns path (TestGroup name tests)
-  | null tests' = Nothing
-  | otherwise   = Just (TestGroup name tests')
-  where
-    tests' = filterTests patterns (path ++ [name]) tests
-filterTest patterns path (PlusTestOptions topts inner_test)
-  = fmap (PlusTestOptions topts) (filterTest patterns path inner_test)
-
-
-runTest' :: TestOptions -> Test -> IO (RunningTest, [IO ()])
-runTest' topts (Test name testlike) = do
+runTest' :: ([String] -> String -> Bool) -> [String]
+         -> TestOptions -> Test -> IO (Maybe (RunningTest, [IO ()]))
+runTest' use_test path topts (Test name testlike)
+  | use_test path name = do
     (result, action) <- runTest (completeTestOptions topts) testlike
-    return (RunTest name (testTypeName testlike) (SomeImproving result), [action])
-runTest' topts (TestGroup name tests) = fmap (onLeft (RunTestGroup name)) $ runTests' topts tests
-runTest' topts (PlusTestOptions extra_topts test) = runTest' (topts `mappend` extra_topts) test
+    return (Just (RunTest name (testTypeName testlike) (SomeImproving result), [action]))
+  | otherwise = return Nothing
+runTest' use_test path topts (TestGroup name tests) = do
+    (results, actions) <- runTests' use_test (path ++ [name]) topts tests
+    return $ if null results then Nothing else Just ((RunTestGroup name results), actions)
+runTest' use_test path topts (PlusTestOptions extra_topts test) = runTest' use_test path (topts `mappend` extra_topts) test
+runTest' use_test path topts (BuildTest build) = build >>= runTest' use_test path topts
 
-runTests' :: TestOptions -> [Test] -> IO ([RunningTest], [IO ()])
-runTests' topts = fmap (onRight concat . unzip) . mapM (runTest' topts)
+runTests' :: ([String] -> String -> Bool) -> [String]
+          -> TestOptions -> [Test] -> IO ([RunningTest], [IO ()])
+runTests' use_test path topts = fmap (onRight concat . unzip . catMaybes) . mapM (runTest' use_test path topts)
 
 
 completeTestOptions :: TestOptions -> CompleteTestOptions

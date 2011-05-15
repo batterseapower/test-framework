@@ -10,7 +10,7 @@ module Test.Framework (
         module Test.Framework.Seed
     ) where
 
-import Test.Framework.Core (Test, TestName, testGroup, plusTestOptions)
+import Test.Framework.Core (Test, TestName, testGroup, plusTestOptions, buildTest, mutuallyExclusive)
 import Test.Framework.Options
 import Test.Framework.Runners.Console
 import Test.Framework.Runners.Options
