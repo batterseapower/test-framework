@@ -12,8 +12,6 @@ import Test.QuickCheck hiding (Property)
 import qualified Control.Exception.Extensible as E
 import Control.DeepSeq (rnf)
 
-import Data.List
-
 import System.Random
 
 
