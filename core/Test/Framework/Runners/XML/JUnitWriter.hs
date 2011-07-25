@@ -37,12 +37,11 @@ data RunDescription = RunDescription {
 
 -- | Serializes a `RunDescription` value to a `String`.
 serialize :: RunDescription -> String
-serialize = ppTopElement . fixClassNames . toXml
-  where fixClassNames = setAttributeValue (unqual "classname") (setUnsetClassName "<none>")
+serialize = ppTopElement . toXml
 
 -- | Maps a `RunDescription` value to an XML Element
 toXml :: RunDescription -> Element
-toXml runDesc = unode "testsuite" (attrs, concatMap morphTestCase $ tests runDesc)
+toXml runDesc = unode "testsuite" (attrs, map morphTestCase $ tests runDesc)
   where
     -- | Top-level attributes for the first @testsuite@ tag.
     attrs :: [Attr]
@@ -60,27 +59,14 @@ toXml runDesc = unode "testsuite" (attrs, concatMap morphTestCase $ tests runDes
              ]
 
 -- | Generates XML elements for an individual test case or test group.
-morphTestCase :: FinishedTest -> [Element]
-morphTestCase (RunTestGroup gname testList) = map (setClassName gname) $
-                                            concatMap morphTestCase testList
-  where
-    setClassName :: String -> Element -> Element
-    setClassName group e@(Element _ attribs _ _) =
-      e { elAttribs=setClassAttr group attribs }
-
-    -- | Find the classname attribute and prepend gname to it.
-    setClassAttr :: String -> [Attr] -> [Attr]
-    setClassAttr _ []          = []
-    setClassAttr group (a@(Attr k v):as)
-      | qName k == "classname" = (Attr k (updateName gname v)):as
-      | otherwise              = a:setClassAttr group as
-        where
-          updateName prefix suffix | suffix == ""                 = prefix
-                                   | otherwise                    = prefix++"."++suffix
+morphTestCase :: FinishedTest -> Element
+morphTestCase (RunTestGroup gname testList) =
+  unode "testsuite" (attrs, map morphTestCase testList)
+  where attrs = [ Attr (unqual "name") gname ]
 
 morphTestCase (RunTest tName _ (tout, pass)) = case pass of
-  True  ->  [unode "testcase" caseAttrs]
-  False ->  [unode "testcase" (caseAttrs, unode "failure" (failAttrs, tout))]
+  True  -> unode "testcase" caseAttrs
+  False -> unode "testcase" (caseAttrs, unode "failure" (failAttrs, tout))
   where caseAttrs = [ Attr (unqual "name") tName
                     , Attr (unqual "classname") ""
                     , Attr (unqual "time") ""
