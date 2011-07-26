@@ -10,7 +10,7 @@ import Test.Framework.Runners.Core (RunTest(..), FinishedTest)
 
 import Data.Maybe ( fromMaybe )
 import Text.XML.Light ( ppTopElement, unqual, unode
-                      , Attr(..), Element(..), QName(..), Content(..))
+                      , Attr(..), Element(..) )
 
 
 -- | An overall description of the test suite run.  This is currently
@@ -74,21 +74,3 @@ morphTestCase (RunTest tName _ (tout, pass)) = case pass of
         failAttrs = [ Attr (unqual "message") ""
                     , Attr (unqual "type") ""
                     ]
-
--- | Sets the specified attributes to the specified value in the given
--- @Element@, returning a new Element with the change.  This recurses
--- deeply through the @Element@, changing all attributes.
-setAttributeValue :: QName -> (Attr -> Attr) -> Element -> Element
-setAttributeValue aName fn e@(Element _ attribs contents _) = e {
-  elAttribs = map fn attribs
-  , elContent = map recurse contents }
-  where
-    recurse :: Content -> Content
-    recurse (Elem el) = Elem $ setAttributeValue aName fn el
-    -- If content isn't an element, then just return the content as-is:
-    recurse x         = x
-
--- | Sets the attribute value to @newV@ iff the attribute represents a classname.
-setUnsetClassName :: String -> Attr -> Attr
-setUnsetClassName newV a@(Attr qn v) | qn == (unqual "classname") && v == ""   = a { attrVal = newV }
-                                     | otherwise = a
