@@ -14,8 +14,8 @@ import System.Locale       ( defaultTimeLocale )
 import Network.HostName    ( getHostName )
 
 
-produceReport :: TestStatistics -> [FinishedTest] -> IO String
-produceReport test_statistics fin_tests = fmap serialize $ mergeResults test_statistics fin_tests
+produceReport :: Bool -> TestStatistics -> [FinishedTest] -> IO String
+produceReport nested test_statistics fin_tests = fmap (serialize nested) $ mergeResults test_statistics fin_tests
 
 
 -- | Generates a description of the complete test run, given some

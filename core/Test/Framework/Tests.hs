@@ -9,7 +9,8 @@ import Test.QuickCheck
 -- I wish I could use my test framework to test my framework...
 main :: IO ()
 main = do
-    _ <- runTestTT $ TestList TP.tests
-    _ <- runTestTT $ TestList XT.tests
-    quickCheck XT.prop_validXml
-    return ()
+    _ <- runTestTT $ TestList [
+    	TestList TP.tests,
+    	XT.test
+      ]
+    quickCheck XT.property

@@ -63,7 +63,10 @@ optionsDescription = [
             "only tests that match at least one glob pattern given by an instance of this argument will be run",
         Option [] ["jxml"]
             (ReqArg (\t -> mempty { ropt_xml_output = Just (Just t) }) "FILE")
-            "write a junit-xml summary of the output to FILE",
+            "write a JUnit XML summary of the output to FILE",
+        Option [] ["jxml-nested"]
+            (NoArg (mempty { ropt_xml_nested = Just True }))
+            "use nested testsuites to represent groups in JUnit XML (not standards compliant)",
         Option [] ["plain"]
             (NoArg (mempty { ropt_plain_output = Just True }))
             "do not use any ANSI terminal features to display the test run",
@@ -124,7 +127,7 @@ defaultMainWithOpts tests ropts = do
     
     -- Output XML report (if requested)
     case ropt_xml_output ropts' of
-        K (Just file) -> XML.produceReport test_statistics' fin_tests >>= writeFile file
+        K (Just file) -> XML.produceReport (unK (ropt_xml_nested ropts')) test_statistics' fin_tests >>= writeFile file
         _ -> return ()
     
     -- Set the error code depending on whether the tests succeded or not
@@ -139,6 +142,7 @@ completeRunnerOptions ro = RunnerOptions {
             ropt_test_options = K $ ropt_test_options ro `orElse` mempty,
             ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty,
             ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing,
+            ropt_xml_nested = K $ ropt_xml_nested ro `orElse` False,
             ropt_plain_output = K $ ropt_plain_output ro `orElse` False,
             ropt_hide_successes = K $ ropt_hide_successes ro `orElse` False
         }

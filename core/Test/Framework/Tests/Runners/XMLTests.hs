@@ -1,23 +1,33 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Test.Framework.Tests.Runners.XMLTests where
+module Test.Framework.Tests.Runners.XMLTests (
+    test, property
+  ) where
 
 import Test.Framework.Runners.Core ( RunTest(..), FinishedTest )
-import Test.Framework.Runners.XML.JUnitWriter ( RunDescription(..), morphTestCase, serialize )
+import Test.Framework.Runners.XML.JUnitWriter ( RunDescription(..), morphFlatTestCase, serialize )
 
-import Test.HUnit.Base               ( Test(..), Assertion, (@?=) )
+import Test.HUnit.Base               ( Test(..), (@?=) )
 import Test.QuickCheck               ( Arbitrary, sized, Gen, oneof, listOf, arbitrary )
-import Test.QuickCheck.Property as P (Property, Result(..), succeeded, failed,
-                                      result, liftIOResult)
+import Test.QuickCheck.Property as P ( Property )
 
 import Control.Monad
 
-import Data.ByteString.Char8 as C8 ( pack )
+import Data.ByteString.Char8 as BS ( pack )
 import Data.Maybe
 
-import Text.XML.Light              ( findAttr, unqual, findElements )
-import Text.XML.LibXML.Parser      ( parseMemory_ )
+import qualified Text.XML.Light as XML         ( findAttr, unqual )
+import qualified Text.XML.LibXML.Parser as XML ( parseMemory_ )
+import qualified Text.XML.LibXML.Types as XML  ( Document )
 
--- Properties:
+
+-- #ifdef MIN_VERSION_QuickCheck(2, 4, 0)
+import Test.QuickCheck.Property as P (morallyDubiousIOProperty)
+-- #else
+-- import qualified Test.QuickCheck.Property as P (succeeded, failed, liftIOResult)
+
+-- morallyDubiousIOProperty :: IO Bool -> Property
+-- morallyDubiousIOProperty it = P.liftIOResult $ fmap (\err -> if err then P.failed else P.succeeded) it
+-- #endif
 
 -- | `Arbitrary` instance for `TestResult` generation.
 instance Arbitrary FinishedTest where
@@ -84,38 +94,16 @@ arbitraryXmlStr = listOf arbitraryXmlChar
                          || (c >= 0xE000 && c <= 0xFFFD)
                          || (c >= 0x10000 && c <= 0x10FFFF)
 
--- | Generate random `RunDescriptions`, serialize to XML strings, then
--- compare against the junitreport schema.
-prop_validXml :: RunDescription -> P.Property
-prop_validXml runDescr =  P.liftIOResult $ simpleValidate $ serialize runDescr
-  where
-    simpleValidate :: String -> IO P.Result
-    simpleValidate xml = do
-        err <- fmap isNothing $ parseMemory_ $ C8.pack xml
-        return $ if err then P.failed else P.succeeded
+-- | Generate random `RunDescriptions`, serialize to (flat) XML strings, then check that they are XML
+-- TODO: check them against the JUnit schema
+property :: RunDescription -> P.Property
+property = morallyDubiousIOProperty . fmap isJust . parseSerialize
 
-
-{-
-   HUnit tests:
--}
-
-
-
-tests :: [Test]
-tests = [ ]
-
-{- This test no longer applies
-tests = [ TestLabel "Check the composition of group names"
-          (TestCase test_gNameCase1)
-        ]
+parseSerialize :: RunDescription -> IO (Maybe XML.Document)
+parseSerialize = XML.parseMemory_ . BS.pack . serialize False
 
 -- | Verify that the group names are properly pre-pended to sub-tests.
-test_gNameCase1 :: Assertion
-test_gNameCase1 = let x = morphTestCase tGroup2
-                  in
-                   findAttr (unqual "classname") x @?= Just "top.g1"
-                     where
-                       tGroup1 = RunTestGroup "g1" [RunTest "t1" "" ("", True)]
-                       tGroup2 = RunTestGroup "top" [tGroup1]
--}
-
+test :: Test
+test = TestLabel "Check the composition of group names" $ TestCase $
+       XML.findAttr (XML.unqual "classname") x @?= Just "top.g1"
+  where x = head $ morphFlatTestCase [] $ RunTestGroup "top" [RunTestGroup "g1" [RunTest "t1" "" ("", True)]]

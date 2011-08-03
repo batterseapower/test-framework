@@ -1,13 +1,15 @@
 module Test.Framework.Runners.XML.JUnitWriter (
         RunDescription(..),
-        serialize, toXml,
+        serialize,
 #ifdef TEST
-        morphTestCase
+        morphFlatTestCase, morphNestedTestCase
 #endif
     ) where
 
+import Test.Framework.Core (TestName)
 import Test.Framework.Runners.Core (RunTest(..), FinishedTest)
 
+import Data.List  ( intercalate )
 import Data.Maybe ( fromMaybe )
 import Text.XML.Light ( ppTopElement, unqual, unode
                       , Attr(..), Element(..) )
@@ -36,13 +38,16 @@ data RunDescription = RunDescription {
 
 
 -- | Serializes a `RunDescription` value to a `String`.
-serialize :: RunDescription -> String
-serialize = ppTopElement . toXml
+serialize :: Bool -> RunDescription -> String
+serialize nested = ppTopElement . toXml nested
 
 -- | Maps a `RunDescription` value to an XML Element
-toXml :: RunDescription -> Element
-toXml runDesc = unode "testsuite" (attrs, map morphTestCase $ tests runDesc)
+toXml :: Bool -> RunDescription -> Element
+toXml nested runDesc = unode "testsuite" (attrs, morph_cases (tests runDesc))
   where
+    morph_cases | nested    = map morphNestedTestCase
+                | otherwise = concatMap (morphFlatTestCase [])
+
     -- | Top-level attributes for the first @testsuite@ tag.
     attrs :: [Attr]
     attrs = map (\(x,f)->Attr (unqual x) (f runDesc)) fields
@@ -58,17 +63,25 @@ toXml runDesc = unode "testsuite" (attrs, map morphTestCase $ tests runDesc)
              , ("package",   fromMaybe "" . package)
              ]
 
--- | Generates XML elements for an individual test case or test group.
-morphTestCase :: FinishedTest -> Element
-morphTestCase (RunTestGroup gname testList) =
-  unode "testsuite" (attrs, map morphTestCase testList)
-  where attrs = [ Attr (unqual "name") gname ]
+morphFlatTestCase :: [String] -> FinishedTest -> [Element]
+morphFlatTestCase path (RunTestGroup gname testList)
+  = concatMap (morphFlatTestCase (gname:path)) testList
+morphFlatTestCase path (RunTest tName _ res) = [morphOneTestCase cName tName res]
+  where cName | null path = "<none>"
+              | otherwise = intercalate "." (reverse path)
 
-morphTestCase (RunTest tName _ (tout, pass)) = case pass of
+morphNestedTestCase :: FinishedTest -> Element
+morphNestedTestCase (RunTestGroup gname testList) =
+  unode "testsuite" (attrs, map morphNestedTestCase testList)
+  where attrs = [ Attr (unqual "name") gname ]
+morphNestedTestCase (RunTest tName _ res) = morphOneTestCase "" tName res
+
+morphOneTestCase :: String -> TestName -> (String, Bool) -> Element
+morphOneTestCase cName tName (tout, pass) = case pass of
   True  -> unode "testcase" caseAttrs
   False -> unode "testcase" (caseAttrs, unode "failure" (failAttrs, tout))
   where caseAttrs = [ Attr (unqual "name") tName
-                    , Attr (unqual "classname") ""
+                    , Attr (unqual "classname") cName
                     , Attr (unqual "time") ""
                     ]
         failAttrs = [ Attr (unqual "message") ""

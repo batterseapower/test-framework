@@ -78,7 +78,7 @@ Executable test-framework-tests
         if !flag(tests)
                 Buildable:              False
         else
-                Build-Depends:          HUnit >= 1.2, QuickCheck >= 2.3 && < 2.4,
+                Build-Depends:          HUnit >= 1.2, QuickCheck >= 2.3 && < 2.5,
                                         ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.5.1,
                                         regex-posix >= 0.72, extensible-exceptions >= 0.1.1,
                                         old-locale >= 1.0, time >= 1.1.2,
