@@ -65,9 +65,11 @@ tests = [
                 testProperty "sort3" prop_sort3
             ],
         testGroup "Sorting Group 2" [
-                testProperty "sort4" prop_sort4,
-                testProperty "sort5" prop_sort5,
-                testProperty "sort6" prop_sort6,
+                testGroup "Nested Group 1" [
+                       testProperty "sort4" prop_sort4,
+                       testProperty "sort5" prop_sort5,
+                       testProperty "sort6" prop_sort6
+                     ],
                 testCase "sort7" test_sort7,
                 testCase "sort8" test_sort8
             ]
