@@ -29,7 +29,7 @@ Library
                                 Test.Framework.Runners.Console
                                 Test.Framework.Runners.Options
                                 Test.Framework.Seed
-        
+
         Other-Modules:          Test.Framework.Core
                                 Test.Framework.Improving
                                 Test.Framework.Runners.Console.Colors
@@ -47,7 +47,7 @@ Library
                                 Test.Framework.Runners.XML.JUnitWriter
                                 Test.Framework.Runners.XML
                                 Test.Framework.Utilities
-        
+
         Build-Depends:          ansi-terminal >= 0.4.0, ansi-wl-pprint >= 0.5.1,
                                 regex-posix >= 0.72, extensible-exceptions >= 0.1.1,
                                 old-locale >= 1.0, time >= 1.1.2,
@@ -56,7 +56,7 @@ Library
                 Build-Depends:          base >= 3 && < 5, random >= 1.0, containers >= 0.1
         else
                 Build-Depends:          base < 3
-        
+
         Extensions:             CPP
                                 PatternGuards
                                 ExistentialQuantification
@@ -66,9 +66,9 @@ Library
                                 TypeOperators
                                 FunctionalDependencies
                                 MultiParamTypeClasses
-        
+
         Ghc-Options:            -Wall
-        
+
         if impl(ghc)
                 Cpp-Options:            -DCOMPILER_GHC
 
@@ -88,7 +88,7 @@ Executable test-framework-tests
                         Build-Depends:          base >= 3 && < 5, random >= 1.0, containers >= 0.1
                 else
                         Build-Depends:          base < 3
-        
+
                 Extensions:             CPP
                                         PatternGuards
                                         ExistentialQuantification
@@ -98,10 +98,10 @@ Executable test-framework-tests
                                         TypeOperators
                                         FunctionalDependencies
                                         MultiParamTypeClasses
-        
+
                 Cpp-Options:            -DTEST
-        
+
                 Ghc-Options:            -Wall -threaded
-        
+
                 if impl(ghc)
                         Cpp-Options:            -DCOMPILER_GHC
