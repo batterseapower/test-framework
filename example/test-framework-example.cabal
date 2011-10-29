@@ -25,5 +25,5 @@ Executable test-framework-example
                 Build-Depends:          base >= 3 && < 5
         else
                 Build-Depends:          base < 3
-        
+
         Ghc-Options:            -threaded -O0

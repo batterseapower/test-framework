@@ -27,7 +27,7 @@ while [ "$index" -lt "${#subdirectories[@]}" ]; do
 
     # For those directories that use CPP, we need to configure before sdist will work without a warning
     runghc Setup.lhs configure --user
-    
+
     # OK, build the tarball
     sdist_output=`runghc Setup.lhs sdist`
 
@@ -96,7 +96,7 @@ while [ "$index" -lt "${#filenames[@]}" ]; do
         echo "Hackage upload of $filename failed, aborting"
         exit 1
     fi
-    
+
     let "index = $index + 1"
 done
 

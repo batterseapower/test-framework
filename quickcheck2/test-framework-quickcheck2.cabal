@@ -21,17 +21,17 @@ Flag Base3
 
 Library
         Exposed-Modules:        Test.Framework.Providers.QuickCheck2
-        
+
         Build-Depends:          test-framework >= 0.2.0 && < 0.5.0, QuickCheck >= 2.4 && < 2.5, extensible-exceptions >= 0.1.1 && < 0.2.0
         if flag(base3)
                 Build-Depends:          base >= 3 && < 4, random >= 1
         else
                 if flag(base4)
                         Build-Depends:          base >= 4 && < 5, random >= 1
-        
+
         Extensions:             TypeSynonymInstances
                                 TypeOperators
                                 MultiParamTypeClasses
                                 ExistentialQuantification
-        
+
         Ghc-Options:            -Wall
