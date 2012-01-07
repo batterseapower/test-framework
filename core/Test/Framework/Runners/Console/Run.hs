@@ -18,7 +18,7 @@ import System.IO
 
 import Text.PrettyPrint.ANSI.Leijen
 
-import Data.Monoid
+import Data.Monoid (mempty)
 
 import Control.Arrow (second, (&&&))
 import Control.Monad (unless)
