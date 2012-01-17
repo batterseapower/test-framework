@@ -47,7 +47,7 @@ data TestCaseResult = TestCasePassed
 instance Show TestCaseResult where
     show result = case result of
         TestCasePassed         -> "OK"
-        TestCaseFailed message -> "Failed: " ++ message
+        TestCaseFailed message -> message
         TestCaseError message  -> "ERROR: " ++ message
 
 testCaseSucceeded :: TestCaseResult -> Bool
