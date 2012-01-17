@@ -71,8 +71,11 @@ optionsDescription = [
             (NoArg (mempty { ropt_xml_nested = Just True }))
             "use nested testsuites to represent groups in JUnit XML (not standards compliant)",
         Option [] ["plain"]
-            (NoArg (mempty { ropt_plain_output = Just True }))
+            (NoArg (mempty { ropt_color_mode = Just ColorNever }))
             "do not use any ANSI terminal features to display the test run",
+        Option [] ["color"]
+            (NoArg (mempty { ropt_color_mode = Just ColorAlways }))
+            "use ANSI terminal features to display the test run",
         Option [] ["hide-successes"]
             (NoArg (mempty { ropt_hide_successes = Just True }))
             "hide sucessful tests, and only show failures"
@@ -123,9 +126,14 @@ defaultMainWithOpts tests ropts = do
     
     -- Get a lazy list of the test results, as executed in parallel
     running_tests <- runTests ropts' tests
-    
+
+    isplain <- case unK $ ropt_color_mode ropts' of
+        ColorAuto   -> not `fmap` hIsTerminalDevice stdout
+        ColorNever  -> return True
+        ColorAlways -> return False
+
     -- Show those test results to the user as we get them
-    fin_tests <- showRunTestsTop (unK $ ropt_plain_output ropts') (unK $ ropt_hide_successes ropts') running_tests
+    fin_tests <- showRunTestsTop isplain (unK $ ropt_hide_successes ropts') running_tests
     let test_statistics' = gatherStatistics fin_tests
     
     -- Output XML report (if requested)
@@ -146,6 +154,6 @@ completeRunnerOptions ro = RunnerOptions {
             ropt_test_patterns = K $ ropt_test_patterns ro `orElse` mempty,
             ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing,
             ropt_xml_nested = K $ ropt_xml_nested ro `orElse` False,
-            ropt_plain_output = K $ ropt_plain_output ro `orElse` False,
+            ropt_color_mode = K $ ropt_color_mode ro `orElse` ColorAuto,
             ropt_hide_successes = K $ ropt_hide_successes ro `orElse` False
         }
