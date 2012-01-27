@@ -1,5 +1,5 @@
 Name:                test-framework-hunit
-Version:             0.2.6
+Version:             0.2.7
 Cabal-Version:       >= 1.2.3
 Category:            Testing
 Synopsis:            HUnit support for the test-framework package.
