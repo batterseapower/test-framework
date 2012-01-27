@@ -62,12 +62,10 @@ instance Show PropertyResult where
         tests_run_str = fmap show mb_tests_run `orElse` "an unknown number of"
 
 propertySucceeded :: PropertyResult -> Bool
-propertySucceeded property_result = propertyStatusIsSuccess (pr_status property_result)
-
-propertyStatusIsSuccess :: PropertyStatus -> Bool
-propertyStatusIsSuccess PropertyOK                 = True
-propertyStatusIsSuccess PropertyArgumentsExhausted = True
-propertyStatusIsSuccess _                          = False
+propertySucceeded (PropertyResult { pr_status = status, pr_tests_run = mb_n }) = case status of
+  PropertyOK                 -> True
+  PropertyArgumentsExhausted -> maybe False (/= 0) mb_n
+  _                          -> False
 
 
 data Property = forall a. Testable a => Property a
