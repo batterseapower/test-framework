@@ -18,9 +18,12 @@ import Test.QuickCheck.Test
 import Test.QuickCheck.Text
 import Test.QuickCheck.State
 
+import Control.Concurrent.MVar
 import qualified Control.Exception.Extensible as E
 
+import Data.IORef
 import System.Random
+import Unsafe.Coerce
 
 
 -- | Create a 'Test' for a QuickCheck2 'Testable' property
@@ -76,9 +79,11 @@ instance Testlike PropertyTestCount PropertyResult Property where
 
 runProperty :: Testable a => CompleteTestOptions -> a -> IO (PropertyTestCount :~> PropertyResult, IO ())
 runProperty topts testable = do
-    (seed, state) <- initialState topts
+    (seed, mk_state) <- initialState topts
     runImprovingIO $ do
-        mb_result <- maybeTimeoutImprovingIO (unK (topt_timeout topts)) $ myTest state (unGen (property testable))
+        mb_result <- maybeTimeoutImprovingIO (unK (topt_timeout topts)) $ do
+          (state, get_out) <- liftIO mk_state
+          myTest state get_out (unGen (property testable))
         return $ toPropertyResult seed $ case mb_result of
             Nothing                  -> (PropertyTimedOut, Nothing)
             Just (status, tests_run) -> (status, Just tests_run)
@@ -93,40 +98,55 @@ runProperty topts testable = do
 -- I've copied these parts out of QuickCheck 2 source code and modified them to fit my purpose. My
 -- central problem with using the code as-is is that it insists on writing to stdout!
 
-initialState :: CompleteTestOptions -> IO (Int, State)
+initialState :: CompleteTestOptions -> IO (Int, IO (State, IO String))
 initialState topts = do
     (gen, seed) <- newSeededStdGen (unK $ topt_seed topts)
     
-    -- My code is very careful not to write to the terminal since it will screw up my own
-    -- output code, but I need to fill in the terminal field anyway
-    tm <- newStdioTerminal
-    
     let max_success = unK $ topt_maximum_generated_tests topts
         max_size = maxSize stdArgs -- Maximum generated value size currently not configurable
-    return $ (seed, MkState {
-          terminal          = tm
-        , maxSuccessTests   = unK $ topt_maximum_generated_tests topts
-        , maxDiscardedTests = unK $ topt_maximum_unsuitable_generated_tests topts
-        , computeSize       = \n d -> (n * max_size) `div` max_success + (d `div` 10)
-        , numSuccessTests   = 0
-        , numDiscardedTests = 0
-        , collected         = []
-        , expectedFailure   = False
-        , randomSeed        = gen
-        , numSuccessShrinks = 0
-        , numTryShrinks     = 0 })
+
+        -- Copied from the unexported function Test.QuickCheck.Text.output
+        -- Very horrible hack here since the Output data constructor is also not exported!
+        output f = do
+          r <- newIORef ""
+          return (unsafeCoerce (TestQuickCheckTextOutput f r))
+
+        mk_state = do
+          -- My code is very careful not to write to the terminal since it will screw up my own
+          -- output code, but I need to fill in the terminal field anyway. This is useful for
+          -- catching the failing examples that get written to the output.
+          out_var <- newMVar ""
+          out <- output $ \extra -> modifyMVar_ out_var $ \str -> return (str ++ extra)
+          tm <- newTerminal out out
+
+          return (MkState { terminal          = tm
+                          , maxSuccessTests   = unK $ topt_maximum_generated_tests topts
+                          , maxDiscardedTests = unK $ topt_maximum_unsuitable_generated_tests topts
+                          , computeSize       = \n d -> (n * max_size) `div` max_success + (d `div` 10)
+                          , numSuccessTests   = 0
+                          , numDiscardedTests = 0
+                          , collected         = []
+                          , expectedFailure   = False
+                          , randomSeed        = gen
+                          , numSuccessShrinks = 0
+                          , numTryShrinks     = 0 },
+                  modifyMVar out_var $ \str -> return ("", str))
+    return (seed, mk_state)
+
+-- If this doesn't exactly match the definition of Test.QuickCheck.Text.Out you can get segfaults
+data TestQuickCheckTextOutput = TestQuickCheckTextOutput (String -> IO ()) (IORef String)
 
 
 -- NB: could use (summary st) in the messages produced by myTest
-myTest :: State -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
-myTest st f
+myTest :: State -> IO String -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
+myTest st get_out f
   | ntest                >= maxSuccessTests st   = return (if expectedFailure st then PropertyOK else PropertyNoExpectedFailure, ntest)
   | numDiscardedTests st >= maxDiscardedTests st = return (PropertyArgumentsExhausted, ntest)
-  | otherwise                                    = yieldImprovement ntest >> myRunATest st f
+  | otherwise                                    = yieldImprovement ntest >> myRunATest st get_out f
   where ntest = numSuccessTests st
 
-myRunATest :: State -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
-myRunATest st f = do
+myRunATest :: State -> IO String -> (StdGen -> Int -> Prop) -> ImprovingIO PropertyTestCount f (PropertyStatus, PropertyTestCount)
+myRunATest st get_out f = do
     let size = computeSize st (numSuccessTests st) (numDiscardedTests st)
     -- Careful to catch exceptions, or else they might bring down the whole test framework
     ei_st_res <- liftIO $ flip E.catch (\e -> return $ Left $ show (e :: E.SomeException)) $ do
@@ -134,7 +154,7 @@ myRunATest st f = do
                                   return (Right (res, ts))
                                   
     case ei_st_res of
-       Left text -> return (PropertyException text, numSuccessTests st + 1)
+       Left text -> liftIO get_out >>= \extra_text -> return (PropertyException (text ++ extra_text), numSuccessTests st + 1)
        Right (res, ts) -> do
            liftIO $ callbackPostTest st res
     
@@ -144,17 +164,17 @@ myRunATest st f = do
                             , randomSeed      = rnd2
                             , collected       = stamp : collected st
                             , expectedFailure = expect
-                            } f
+                            } get_out f
        
               MkResult{ok = Nothing, expect = expect} -> -- discarded test
                 do myTest st{ numDiscardedTests = numDiscardedTests st + 1
                             , randomSeed        = rnd2
                             , expectedFailure   = expect
-                            } f
+                            } get_out f
          
               MkResult{ok = Just False} -> -- failed test
                 do if expect res
-                     then liftIO $ myFoundFailure st res ts
+                     then liftIO $ myFoundFailure st get_out res ts
                           -- Could terminate immediately without any shrinking by doing this instead:
                           -- return (PropertyFalsifiable (reason res), numSuccessTests st + 1)
                      else return (PropertyOK, numSuccessTests st + 1)
@@ -163,24 +183,24 @@ myRunATest st f = do
 
 
 -- | This function eventually reports a failure but attempts to shrink the counterexample before it does so
-myFoundFailure :: State -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
-myFoundFailure st res ts =
-  do myLocalMin st{ numTryShrinks = 0 } res ts
+myFoundFailure :: State -> IO String -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
+myFoundFailure st get_out res ts =
+  do myLocalMin st{ numTryShrinks = 0 } get_out res ts
 
-myLocalMin :: State -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
-myLocalMin st res _ | P.interrupted res = myLocalMinFound st res
-myLocalMin st res ts = do
+myLocalMin :: State -> IO String -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
+myLocalMin st get_out res _ | P.interrupted res = myLocalMinFound st get_out res
+myLocalMin st get_out res ts = do
     r <- tryEvaluate ts
     case r of
       Left err ->
-        myLocalMinFound st
+        myLocalMinFound st get_out
            (exception "Exception while generating shrink-list" err) { callbacks = callbacks res }
-      Right ts' -> myLocalMin' st res ts'
+      Right ts' -> myLocalMin' st get_out res ts'
 
 
-myLocalMin' :: State -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
-myLocalMin' st res [] = myLocalMinFound st res
-myLocalMin' st res (t:ts) =
+myLocalMin' :: State -> IO String -> P.Result -> [Rose P.Result] -> IO (PropertyStatus, PropertyTestCount)
+myLocalMin' st get_out res [] = myLocalMinFound st get_out res
+myLocalMin' st get_out res (t:ts) =
   do -- CALLBACK before_test
     MkRose res' ts' <- protectRose (reduceRose t)
     callbackPostTest st res'
@@ -188,14 +208,20 @@ myLocalMin' st res (t:ts) =
     -- I'm not going to output any message at all here (unlike QuickCheck2) because I want a
     -- single error message I can give to the user.
     if ok res' == Just False
-      then myFoundFailure st{ numSuccessShrinks = numSuccessShrinks st + 1 } res' ts'
-      else myLocalMin st{ numTryShrinks = numTryShrinks st + 1 } res ts
+      then myFoundFailure st{ numSuccessShrinks = numSuccessShrinks st + 1 } get_out res' ts'
+      else myLocalMin st{ numTryShrinks = numTryShrinks st + 1 } get_out res ts
 
-myLocalMinFound :: State -> P.Result -> IO (PropertyStatus, PropertyTestCount)
-myLocalMinFound st res =
+myLocalMinFound :: State -> IO String -> P.Result -> IO (PropertyStatus, PropertyTestCount)
+myLocalMinFound st get_out res =
   do callbackPostFinalFailure st res
      -- NB: could use (numSuccessShrinks st) in the message somehow
-     return (PropertyFalsifiable (P.reason res), numSuccessTests st + 1)
+     extra_text <- get_out
+     let reason = dropWhileRev (`elem` "\r\n") extra_text ++
+                  if P.reason res /= "Falsifiable" then P.reason res else ""
+     return (PropertyFalsifiable reason, numSuccessTests st + 1)
+
+dropWhileRev :: (a -> Bool) -> [a] -> [a]
+dropWhileRev p = reverse . dropWhile p . reverse
 
 
 --
