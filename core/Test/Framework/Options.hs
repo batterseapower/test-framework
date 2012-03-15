@@ -15,6 +15,8 @@ data TestOptions' f = TestOptions {
         -- ^ Maximum number of tests to generate when using something like QuickCheck
         topt_maximum_unsuitable_generated_tests :: f Int,
         -- ^ Maximum number of unsuitable tests to consider before giving up when using something like QuickCheck
+        topt_maximum_test_size :: f Int,
+        -- ^ Maximum size of generated tests when using something like QuickCheck
         topt_maximum_test_depth :: f Int,
         -- ^ Maximum depth of generated tests when using something like SmallCheck
         topt_timeout :: f (Maybe Int)
@@ -26,6 +28,7 @@ instance Monoid (TestOptions' Maybe) where
             topt_seed = Nothing,
             topt_maximum_generated_tests = Nothing,
             topt_maximum_unsuitable_generated_tests = Nothing,
+            topt_maximum_test_size = Nothing,
             topt_maximum_test_depth = Nothing,
             topt_timeout = Nothing
         }
@@ -34,6 +37,7 @@ instance Monoid (TestOptions' Maybe) where
             topt_seed = getLast (mappendBy (Last . topt_seed) to1 to2),
             topt_maximum_generated_tests = getLast (mappendBy (Last . topt_maximum_generated_tests) to1 to2),
             topt_maximum_unsuitable_generated_tests = getLast (mappendBy (Last . topt_maximum_unsuitable_generated_tests) to1 to2),
+            topt_maximum_test_size = getLast (mappendBy (Last . topt_maximum_test_size) to1 to2),
             topt_maximum_test_depth = getLast (mappendBy (Last . topt_maximum_test_depth) to1 to2),
             topt_timeout = getLast (mappendBy (Last . topt_timeout) to1 to2)
         }

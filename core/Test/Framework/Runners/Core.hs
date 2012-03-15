@@ -59,6 +59,7 @@ completeTestOptions to = TestOptions {
             topt_seed = K $ topt_seed to `orElse` RandomSeed,
             topt_maximum_generated_tests = K $ topt_maximum_generated_tests to `orElse` 100,
             topt_maximum_unsuitable_generated_tests = K $ topt_maximum_unsuitable_generated_tests to `orElse` 1000,
+            topt_maximum_test_size = K $ topt_maximum_test_size to `orElse` 100,
             topt_maximum_test_depth = K $ topt_maximum_test_depth to `orElse` 5,
             topt_timeout = K $ topt_timeout to `orElse` Nothing
         }
