@@ -52,7 +52,7 @@ optionsDescription = [
         Option [] ["maximum-unsuitable-generated-tests"]
             (ReqArg (\t -> mempty { ropt_test_options = Just (mempty { topt_maximum_unsuitable_generated_tests = Just (read t) }) }) "NUMBER")
             "how many unsuitable candidate tests something like QuickCheck should endure before giving up, by default",
-        Option [] ["maximum-test-size"]
+        Option ['s'] ["maximum-test-size"]
             (ReqArg (\t -> mempty {ropt_test_options = Just (mempty { topt_maximum_test_size = Just (read t) }) }) "NUMBER")
             "to what size something like QuickCheck should test the properties, by default",
         Option ['d'] ["maximum-test-depth"]
