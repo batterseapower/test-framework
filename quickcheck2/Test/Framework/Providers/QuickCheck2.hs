@@ -103,7 +103,7 @@ initialState topts = do
     (gen, seed) <- newSeededStdGen (unK $ topt_seed topts)
     
     let max_success = unK $ topt_maximum_generated_tests topts
-        max_size = maxSize stdArgs -- Maximum generated value size currently not configurable
+        max_size = unK $ topt_maximum_test_size topts
 
         -- Copied from the unexported function Test.QuickCheck.Text.output
         -- Very horrible hack here since the Output data constructor is also not exported!
