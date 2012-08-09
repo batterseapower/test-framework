@@ -132,7 +132,7 @@ defaultMainWithOpts tests ropts = do
     let ropts' = completeRunnerOptions ropts
     
     when (unK$ ropt_list_only ropts') $ do 
-      putStrLn "FINISH ME -- LIST AVAILABLE TESTS!!"
+      putStr $ listTests tests
       exitSuccess
     
     -- Get a lazy list of the test results, as executed in parallel
@@ -156,6 +156,18 @@ defaultMainWithOpts tests ropts = do
     exitWith $ if ts_no_failures test_statistics'
                then ExitSuccess
                else ExitFailure 1
+
+-- | Print out a list of available tests.
+listTests :: [Test] -> String
+listTests tests = "\ntest-framework: All available tests:\n"++
+                  "====================================\n"++ 
+                  concat (map (++"\n") (concatMap (showTest "") tests))
+  where 
+    showTest :: String -> Test -> [String]
+    showTest path (Test name _testlike)    = ["  "++path ++ name]
+    showTest path (TestGroup name tests)   = concatMap (showTest (path++":"++name)) tests
+    showTest path (PlusTestOptions _ test) = showTest path test
+    showTest path (BuildTest build)        = []
 
 
 completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions
