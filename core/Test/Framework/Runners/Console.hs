@@ -14,6 +14,7 @@ import qualified Test.Framework.Runners.XML as XML
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
+import Control.Monad (when)
 import System.Console.GetOpt
 import System.Environment
 import System.Exit
@@ -64,6 +65,9 @@ optionsDescription = [
         Option [] ["no-timeout"]
             (NoArg (mempty { ropt_test_options = Just (mempty { topt_timeout = Just Nothing }) }))
             "specifies that tests should be run without a timeout, by default",
+        Option ['l'] ["list-tests"]
+            (NoArg (mempty { ropt_list_only = Just True }))
+            "list available tests but don't run any; useful to guide subsequent --select-tests",
         Option ['t'] ["select-tests"]
             (ReqArg (\t -> mempty { ropt_test_patterns = Just [read t] }) "TEST-PATTERN")
             "only tests that match at least one glob pattern given by an instance of this argument will be run",
@@ -127,6 +131,10 @@ defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
 defaultMainWithOpts tests ropts = do
     let ropts' = completeRunnerOptions ropts
     
+    when (unK$ ropt_list_only ropts') $ do 
+      putStrLn "FINISH ME -- LIST AVAILABLE TESTS!!"
+      exitSuccess
+    
     -- Get a lazy list of the test results, as executed in parallel
     running_tests <- runTests ropts' tests
 
@@ -158,5 +166,6 @@ completeRunnerOptions ro = RunnerOptions {
             ropt_xml_output = K $ ropt_xml_output ro `orElse` Nothing,
             ropt_xml_nested = K $ ropt_xml_nested ro `orElse` False,
             ropt_color_mode = K $ ropt_color_mode ro `orElse` ColorAuto,
-            ropt_hide_successes = K $ ropt_hide_successes ro `orElse` False
+            ropt_hide_successes = K $ ropt_hide_successes ro `orElse` False,
+            ropt_list_only      = K $ ropt_list_only      ro `orElse` False
         }

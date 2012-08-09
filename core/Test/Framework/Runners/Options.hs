@@ -17,7 +17,8 @@ data RunnerOptions' f = RunnerOptions {
         ropt_xml_output :: f (Maybe FilePath),
         ropt_xml_nested :: f Bool,
         ropt_color_mode :: f ColorMode,
-        ropt_hide_successes :: f Bool
+        ropt_hide_successes :: f Bool,
+        ropt_list_only  :: f Bool
     }
 
 instance Monoid (RunnerOptions' Maybe) where
@@ -28,7 +29,8 @@ instance Monoid (RunnerOptions' Maybe) where
             ropt_xml_output = Nothing,
             ropt_xml_nested = Nothing,
             ropt_color_mode = Nothing,
-            ropt_hide_successes = Nothing
+            ropt_hide_successes = Nothing,
+            ropt_list_only      = Nothing
         }
 
     mappend ro1 ro2 = RunnerOptions {
@@ -38,5 +40,6 @@ instance Monoid (RunnerOptions' Maybe) where
             ropt_xml_output = mappendBy ropt_xml_output ro1 ro2,
             ropt_xml_nested = getLast (mappendBy (Last . ropt_xml_nested) ro1 ro2),
             ropt_color_mode = getLast (mappendBy (Last . ropt_color_mode) ro1 ro2),
-            ropt_hide_successes = getLast (mappendBy (Last . ropt_hide_successes) ro1 ro2)
+            ropt_hide_successes = getLast (mappendBy (Last . ropt_hide_successes) ro1 ro2),
+            ropt_list_only      = getLast (mappendBy (Last . ropt_list_only)      ro1 ro2)
         }
