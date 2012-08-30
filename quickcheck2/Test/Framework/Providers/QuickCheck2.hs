@@ -130,7 +130,10 @@ initialState topts = do
                           , randomSeed        = gen
                           , numSuccessShrinks = 0
                           , numTryShrinks     = 0
-                          , numTotTryShrinks  = 0 },
+#if MIN_VERSION_QuickCheck(2,5,0)
+                          , numTotTryShrinks  = 0
+#endif
+                          },
                   modifyMVar out_var $ \str -> return ("", str))
     return (seed, mk_state)
 

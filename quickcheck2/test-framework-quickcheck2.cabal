@@ -33,5 +33,6 @@ Library
                                 TypeOperators
                                 MultiParamTypeClasses
                                 ExistentialQuantification
+                                CPP
 
         Ghc-Options:            -Wall
