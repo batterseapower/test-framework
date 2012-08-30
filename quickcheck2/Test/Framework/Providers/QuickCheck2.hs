@@ -129,7 +129,8 @@ initialState topts = do
                           , expectedFailure   = False
                           , randomSeed        = gen
                           , numSuccessShrinks = 0
-                          , numTryShrinks     = 0 },
+                          , numTryShrinks     = 0
+                          , numTotTryShrinks  = 0 },
                   modifyMVar out_var $ \str -> return ("", str))
     return (seed, mk_state)
 
