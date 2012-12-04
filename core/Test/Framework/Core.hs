@@ -1,10 +1,11 @@
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances, DeriveDataTypeable #-}
 module Test.Framework.Core where
 
 import Test.Framework.Improving
 import Test.Framework.Options
 
 import Control.Concurrent.MVar
+import Data.Typeable
 
 
 -- | Something like the result of a test: works in concert with 'Testlike'.
@@ -35,7 +36,8 @@ type TestTypeName = String
 --
 -- For an example of how to use test-framework, please see
 -- <http://github.com/batterseapower/test-framework/raw/master/example/Test/Framework/Example.lhs>
-data Test = forall i r t. Testlike i r t => Test TestName t -- ^ A single test of some particular type
+data Test = forall i r t.
+            (Testlike i r t, Typeable t) => Test TestName t -- ^ A single test of some particular type
           | TestGroup TestName [Test]                       -- ^ Assemble a number of tests into a cohesive group
           | PlusTestOptions TestOptions Test                -- ^ Add some options to child tests
           | BuildTest (IO Test)                             -- ^ Convenience for creating tests from an 'IO' action
@@ -54,6 +56,7 @@ buildTest = BuildTest
 
 
 data MutuallyExcluded t = ME (MVar ()) t
+    deriving Typeable
 
 -- This requires UndecidableInstances, but I think it can't be made inconsistent?
 instance Testlike i r t => Testlike i r (MutuallyExcluded t) where
