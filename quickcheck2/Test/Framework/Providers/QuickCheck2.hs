@@ -1,10 +1,6 @@
 -- | Allows QuickCheck2 properties to be used with the test-framework package.
 --
 -- For an example of how to use test-framework, please see <http://github.com/batterseapower/test-framework/raw/master/example/Test/Framework/Example.lhs>
---
--- Due to technical limitations of the QuickCheck2 package, it's not possible to correlate arguments that caused
--- the failure with the particular 'Test' that caused them. This means that the arguments to your properties that
--- lead to failure will be printed at non-deterministic positions in the stdout stream. Sorry.
 module Test.Framework.Providers.QuickCheck2 (
         testProperty
     ) where
