@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 -- | Allows HUnit test cases to be used with the test-framework package.
 --
 -- For an example of how to use test-framework, please see <http://github.com/batterseapower/test-framework/raw/master/example/Test/Framework/Example.lhs>
@@ -11,6 +12,7 @@ import Test.Framework.Providers.API
 import qualified Test.HUnit.Base
 import Test.HUnit.Lang
 
+import Data.Typeable
 
 -- | Create a 'Test' for a HUnit 'Assertion'
 testCase :: TestName -> Assertion -> Test
@@ -56,6 +58,7 @@ testCaseSucceeded _              = False
 
 
 newtype TestCase = TestCase Assertion
+    deriving Typeable
 
 instance Testlike TestCaseRunning TestCaseResult TestCase where
     runTest topts (TestCase assertion) = runTestCase topts assertion
