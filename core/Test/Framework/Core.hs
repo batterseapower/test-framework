@@ -4,7 +4,7 @@ module Test.Framework.Core where
 import Test.Framework.Improving
 import Test.Framework.Options
 
-import Control.Arrow (first)
+import Control.Arrow (first, second)
 import Control.Concurrent.MVar
 import Data.Typeable
 
@@ -65,7 +65,7 @@ data MutuallyExcluded t = ME (MVar ()) t
 
 -- This requires UndecidableInstances, but I think it can't be made inconsistent?
 instance Testlike i r t => Testlike i r (MutuallyExcluded t) where
-    runTest cto (ME mvar x) = withMVar mvar $ \() -> runTest cto x
+    runTest cto (ME mvar x) = fmap (second (\act -> withMVar mvar $ \() -> act)) $ runTest cto x
     testTypeName ~(ME _ x) = testTypeName x
 
 -- | Mark all tests in this portion of the tree as mutually exclusive, so only one runs at a time
