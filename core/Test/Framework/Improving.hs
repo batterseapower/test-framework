@@ -1,6 +1,6 @@
 module Test.Framework.Improving (
         (:~>)(..), bimapImproving, improvingLast, consumeImproving,
-        ImprovingIO, yieldImprovement, runImprovingIO, liftIO,
+        ImprovingIO, yieldImprovement, runImprovingIO, tunnelImprovingIO, liftIO,
         timeoutImprovingIO, maybeTimeoutImprovingIO
     ) where
 
@@ -48,6 +48,10 @@ yieldImprovement improvement = IIO $ \chan -> do
     -- by the timeout code then they know about it reasonably promptly.
     yield
     writeChan chan (Left improvement)
+
+-- NB: could have a more general type but it would be impredicative
+tunnelImprovingIO :: ImprovingIO i f (ImprovingIO i f a -> IO a)
+tunnelImprovingIO = IIO $ \chan -> return $ \iio -> unIIO iio chan
 
 runImprovingIO :: ImprovingIO i f f -> IO (i :~> f, IO ())
 runImprovingIO iio = do

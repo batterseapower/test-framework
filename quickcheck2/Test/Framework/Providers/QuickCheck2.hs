@@ -8,7 +8,8 @@ module Test.Framework.Providers.QuickCheck2 (
 
 import Test.Framework.Providers.API
 
-import Test.QuickCheck.Property (Testable)
+import Test.QuickCheck.Property (Testable, Callback(PostTest), CallbackKind(NotCounterexample), callback)
+import Test.QuickCheck.State (numSuccessTests)
 import Test.QuickCheck.Test
 
 import Data.Typeable
@@ -80,8 +81,9 @@ runProperty topts testable = do
                        , chatty = False }
     -- FIXME: yield gradual improvement after each test
     runImprovingIO $ do
+        tunnel <- tunnelImprovingIO
         mb_result <- maybeTimeoutImprovingIO (unK (topt_timeout topts)) $
-          liftIO $ quickCheckWithResult args testable
+          liftIO $ quickCheckWithResult args (callback (PostTest NotCounterexample (\s _r -> tunnel $ yieldImprovement $ numSuccessTests s)) testable)
         return $ case mb_result of
             Nothing     -> PropertyResult { pr_status = PropertyTimedOut, pr_used_seed = seed, pr_tests_run = Nothing }
             Just result -> PropertyResult {
