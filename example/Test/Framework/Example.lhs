@@ -1,12 +1,34 @@
 == RUNNING ==
 
-ghc -package test-framework -package test-framework-quickcheck2 -package test-framework-hunit -threaded Example.lhs -o Example
-./Example --maximum-generated-tests=5000 +RTS -N2
+Compile the test suite:
 
+  ghc -package test-framework -package test-framework-quickcheck2 \
+          -package test-framework-hunit -threaded Example.lhs -o Example
+
+To run the test suite with the default options, simply execute the
+resulting binary:
+
+  ./Example
+
+Test options can also be supplied on the command-line:
+
+  ./Example --maximum-generated-tests=5000 +RTS -N2
+
+To see the available options, run:
+
+  ./Example --help
+
+These options can also be specified in the code. An alternate main
+function, mainWithOpts, with compile-time options is provided:
+
+  ghc -package test-framework -package test-framework-quickcheck2 \
+          -package test-framework-hunit -main-is mainWithOpts     \
+          -threaded Example.lhs -o Example
+  ./Example
 
 == ATTRIBUTION ==
 
-Tthe example properties come from the parallel QuickCheck driver (pqc),
+The example properties come from the parallel QuickCheck driver (pqc),
 see http://code.haskell.org/~dons/code/pqc/.  The BSD license is repeated
 below, per the licensing conditions of pqc.
 
@@ -46,7 +68,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 \begin{code}
 
-import Test.Framework (defaultMain, testGroup)
+module Main
+where
+
+import Data.Monoid (mempty)
+import Test.Framework (defaultMain, defaultMainWithOpts, testGroup)
+import Test.Framework.Options (TestOptions, TestOptions'(..))
+import Test.Framework.Runners.Options (RunnerOptions, RunnerOptions'(..))
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 
@@ -55,8 +83,27 @@ import Test.HUnit
 
 import Data.List
 
-
 main = defaultMain tests
+
+mainWithOpts = do
+  -- Test options can also be specified in the code. The TestOptions
+  -- type is an instance of the Monoid type class, so the easiest way
+  -- to get an empty set of options is with `mempty`.
+  let empty_test_opts = mempty :: TestOptions
+
+  -- We update the empty TestOptions with our desired values.
+  let my_test_opts = empty_test_opts {
+    topt_maximum_generated_tests = Just 500
+  }
+
+  -- Now we create an empty RunnerOptions in the same way, and add
+  -- our TestOptions to it.
+  let empty_runner_opts = mempty :: RunnerOptions
+  let my_runner_opts = empty_runner_opts {
+    ropt_test_options = Just my_test_opts
+  }
+
+  defaultMainWithOpts tests my_runner_opts
 
 tests = [
         testGroup "Sorting Group 1" [
