@@ -167,7 +167,7 @@ listTests tests = "\ntest-framework: All available tests:\n"++
     showTest path (Test name _testlike)    = ["  "++path ++ name]
     showTest path (TestGroup name tests)   = concatMap (showTest (path++":"++name)) tests
     showTest path (PlusTestOptions _ test) = showTest path test
-    showTest _    (BuildTest _)            = []
+    showTest path (BuildTestBracketed _)   = ["  "++path ++ "<created at runtime>"]
 
 
 completeRunnerOptions :: RunnerOptions -> CompleteRunnerOptions

@@ -4,6 +4,7 @@ module Test.Framework.Core where
 import Test.Framework.Improving
 import Test.Framework.Options
 
+import Control.Arrow (first)
 import Control.Concurrent.MVar
 import Data.Typeable
 
@@ -40,7 +41,7 @@ data Test = forall i r t.
             (Testlike i r t, Typeable t) => Test TestName t -- ^ A single test of some particular type
           | TestGroup TestName [Test]                       -- ^ Assemble a number of tests into a cohesive group
           | PlusTestOptions TestOptions Test                -- ^ Add some options to child tests
-          | BuildTest (IO Test)                             -- ^ Convenience for creating tests from an 'IO' action
+          | BuildTestBracketed (IO (Test, IO ()))           -- ^ Convenience for creating tests from an 'IO' action, with cleanup
 
 -- | Assemble a number of tests into a cohesive group
 testGroup :: TestName -> [Test] -> Test
@@ -52,7 +53,11 @@ plusTestOptions = PlusTestOptions
 
 -- | Convenience for creating tests from an 'IO' action
 buildTest :: IO Test -> Test
-buildTest = BuildTest
+buildTest mx = BuildTestBracketed (fmap (flip (,) (return ())) mx)
+
+-- | Convenience for creating tests from an 'IO' action, with a cleanup handler for when tests are finished
+buildTestBracketed :: IO (Test, IO ()) -> Test
+buildTestBracketed = BuildTestBracketed
 
 
 data MutuallyExcluded t = ME (MVar ()) t
@@ -66,10 +71,10 @@ instance Testlike i r t => Testlike i r (MutuallyExcluded t) where
 -- | Mark all tests in this portion of the tree as mutually exclusive, so only one runs at a time
 {-# NOINLINE mutuallyExclusive #-}
 mutuallyExclusive :: Test -> Test
-mutuallyExclusive init_t = BuildTest $ do
+mutuallyExclusive init_t = buildTest $ do
     mvar <- newMVar ()
-    let go (Test tn t)            = Test tn (ME mvar t)
-        go (TestGroup tn ts)      = TestGroup tn (map go ts)
-        go (PlusTestOptions to t) = PlusTestOptions to (go t)
-        go (BuildTest build)      = BuildTest (fmap go build)
+    let go (Test tn t)                = Test tn (ME mvar t)
+        go (TestGroup tn ts)          = TestGroup tn (map go ts)
+        go (PlusTestOptions to t)     = PlusTestOptions to (go t)
+        go (BuildTestBracketed build) = BuildTestBracketed (fmap (first go) build)
     return (go init_t)

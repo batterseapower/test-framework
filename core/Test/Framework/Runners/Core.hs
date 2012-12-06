@@ -11,6 +11,9 @@ import Test.Framework.Runners.ThreadPool
 import Test.Framework.Seed
 import Test.Framework.Utilities
 
+import Control.Concurrent.MVar
+import Control.Exception (mask, finally, onException)
+import Control.Monad
 import Data.Maybe
 import Data.Monoid
 
@@ -47,7 +50,23 @@ runTest' use_test path topts (TestGroup name tests) = do
     (results, actions) <- runTests' use_test (path ++ [name]) topts tests
     return $ if null results then Nothing else Just ((RunTestGroup name results), actions)
 runTest' use_test path topts (PlusTestOptions extra_topts test) = runTest' use_test path (topts `mappend` extra_topts) test
-runTest' use_test path topts (BuildTest build) = build >>= runTest' use_test path topts
+runTest' use_test path topts (BuildTestBracketed build) = mask $ \restore -> build >>= \(test, cleanup) -> do
+    mb_res <- restore (runTest' use_test path topts test) `onException` cleanup
+    case mb_res of
+      -- No sub-tests: perform the cleanup NOW
+      Nothing                  -> cleanup >> return Nothing
+      Just (run_test, actions) -> do
+        -- Sub-tests: perform the cleanup as soon as each of them have completed
+        (mvars, actions') <- liftM unzip $ forM actions $ \action -> do
+          mvar <- newEmptyMVar
+          return (mvar, action `finally` putMVar mvar ())
+        -- NB: the takeMVar action MUST be last in the list because the returned actions are
+        -- scheduled left-to-right, and we want all the actions we depend on to be scheduled
+        -- before we wait for them to complete, or we might deadlock.
+        --
+        -- FIXME: this is a bit of a hack because it uses one pool thread just waiting
+        -- for some other pool threads to complete! Switch to parallel-io?
+        return $ Just (run_test, actions' ++ [(cleanup >> mapM_ takeMVar mvars)])
 
 runTests' :: ([String] -> String -> Bool) -> [String]
           -> TestOptions -> [Test] -> IO ([RunningTest], [IO ()])
