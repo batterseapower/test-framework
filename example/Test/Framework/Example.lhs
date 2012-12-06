@@ -1,6 +1,6 @@
 == RUNNING ==
 
-ghc -package test-framework -package test-framework-quickcheck -package test-framework-hunit -threaded Example.lhs -o Example
+ghc -package test-framework -package test-framework-quickcheck2 -package test-framework-hunit -threaded Example.lhs -o Example
 ./Example --maximum-generated-tests=5000 +RTS -N2
 
 
@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Test.Framework (defaultMain, testGroup)
 import Test.Framework.Providers.HUnit
-import Test.Framework.Providers.QuickCheck (testProperty)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 import Test.QuickCheck
 import Test.HUnit
@@ -70,8 +70,9 @@ tests = [
                        testProperty "sort5" prop_sort5,
                        testProperty "sort6" prop_sort6
                      ],
-                testCase "sort7" test_sort7,
-                testCase "sort8" test_sort8
+                testProperty "sort7" prop_sort7,
+                testCase "sort8" test_sort8,
+                testCase "sort9" test_sort9
             ]
     ]
 
@@ -106,7 +107,10 @@ prop_sort6 xs ys =
         (last (sort (xs ++ ys)) == max (maximum xs) (maximum ys))
   where types = (xs :: [Int], ys :: [Int])
 
-test_sort7 = sort [8, 7, 2, 5, 4, 9, 6, 1, 0, 3] @?= [0..9]
+prop_sort7 xs = if null xs then error "This property deliberately contains a user error" else True
+  where types = (xs :: [Int])
 
-test_sort8 = error "This test deliberately contains a user error"
+test_sort8 = sort [8, 7, 2, 5, 4, 9, 6, 1, 0, 3] @?= [0..9]
+
+test_sort9 = error "This test deliberately contains a user error"
 \end{code}
