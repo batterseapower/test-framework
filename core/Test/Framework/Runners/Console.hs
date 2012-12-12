@@ -1,6 +1,7 @@
 module Test.Framework.Runners.Console (
         defaultMain, defaultMainWithArgs, defaultMainWithOpts,
-        optionsDescription, interpretArgs, interpretArgsOrExit
+        SuppliedRunnerOptions, optionsDescription,
+        interpretArgs, interpretArgsOrExit
     ) where
 
 import Test.Framework.Core
