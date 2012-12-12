@@ -35,6 +35,8 @@ instance Functor ArgDescr where
 -- @Just@ simply gives us the contribution to overall options by the command line option.
 type SuppliedRunnerOptions = Maybe RunnerOptions
 
+-- | Options understood by test-framework. This can be used to add more
+-- options to the tester executable.
 optionsDescription :: [OptDescr SuppliedRunnerOptions]
 optionsDescription = [
         Option [] ["help"]
