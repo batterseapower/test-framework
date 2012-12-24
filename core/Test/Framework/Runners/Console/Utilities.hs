@@ -5,7 +5,7 @@ module Test.Framework.Runners.Console.Utilities (
 import System.Console.ANSI
 import System.IO
 
-import Control.Exception.Extensible
+import Control.Exception (bracket)
 
 
 hideCursorDuring :: IO a -> IO a
