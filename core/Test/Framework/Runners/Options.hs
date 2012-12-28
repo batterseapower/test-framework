@@ -1,4 +1,7 @@
-module Test.Framework.Runners.Options where
+module Test.Framework.Runners.Options (
+        module Test.Framework.Runners.Options,
+        TestPattern
+    ) where
 
 import Test.Framework.Options
 import Test.Framework.Utilities
