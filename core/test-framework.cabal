@@ -24,6 +24,7 @@ Library
                                 Test.Framework.Providers.API
                                 Test.Framework.Runners.Console
                                 Test.Framework.Runners.Options
+                                Test.Framework.Runners.API
                                 Test.Framework.Seed
 
         Other-Modules:          Test.Framework.Core
