@@ -23,7 +23,7 @@ import System.IO
 
 import Data.Monoid
 
-
+#if !MIN_VERSION_base(4,7,0)
 instance Functor OptDescr where
     fmap f (Option a b arg_descr c) = Option a b (fmap f arg_descr) c
 
@@ -31,6 +31,7 @@ instance Functor ArgDescr where
     fmap f (NoArg a) = NoArg (f a)
     fmap f (ReqArg g s) = ReqArg (f . g) s
     fmap f (OptArg g s) = OptArg (f . g) s
+#endif
 
 -- | @Nothing@ signifies that usage information should be displayed.
 -- @Just@ simply gives us the contribution to overall options by the command line option.
