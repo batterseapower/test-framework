@@ -24,6 +24,7 @@ Library
                                 Test.Framework.Providers.API
                                 Test.Framework.Runners.Console
                                 Test.Framework.Runners.Options
+                                Test.Framework.Runners.TestPattern
                                 Test.Framework.Runners.API
                                 Test.Framework.Seed
 
@@ -38,7 +39,6 @@ Library
                                 Test.Framework.Runners.Core
                                 Test.Framework.Runners.Processors
                                 Test.Framework.Runners.Statistics
-                                Test.Framework.Runners.TestPattern
                                 Test.Framework.Runners.ThreadPool
                                 Test.Framework.Runners.TimedConsumption
                                 Test.Framework.Runners.XML.JUnitWriter
