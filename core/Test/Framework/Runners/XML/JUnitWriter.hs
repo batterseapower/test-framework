@@ -58,7 +58,7 @@ toXml nested runDesc = unode "testsuite" (attrs, morph_cases (tests runDesc))
              , ("name",      id . suiteName)
              , ("tests",     show . testCount)
              , ("time",      show . time)
-             , ("timeStamp", fromMaybe "" . timeStamp)
+             , ("timestamp", fromMaybe "" . timeStamp)
              , ("id",        fromMaybe "" . runId)
              , ("package",   fromMaybe "" . package)
              ]
