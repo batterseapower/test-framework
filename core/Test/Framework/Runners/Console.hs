@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Test.Framework.Runners.Console (
         defaultMain, defaultMainWithArgs, defaultMainWithOpts,
         SuppliedRunnerOptions, optionsDescription,
@@ -23,7 +24,7 @@ import System.IO
 
 import Data.Monoid
 
-
+#if __GLASGOW_HASKELL__ <= 706
 instance Functor OptDescr where
     fmap f (Option a b arg_descr c) = Option a b (fmap f arg_descr) c
 
@@ -31,6 +32,7 @@ instance Functor ArgDescr where
     fmap f (NoArg a) = NoArg (f a)
     fmap f (ReqArg g s) = ReqArg (f . g) s
     fmap f (OptArg g s) = OptArg (f . g) s
+#endif
 
 -- | @Nothing@ signifies that usage information should be displayed.
 -- @Just@ simply gives us the contribution to overall options by the command line option.
@@ -97,7 +99,7 @@ interpretArgs :: [String] -> IO (Either String (RunnerOptions, [String]))
 interpretArgs args = do
     prog_name <- getProgName
     let usage_header = "Usage: " ++ prog_name ++ " [OPTIONS]"
-    
+
     case getOpt Permute optionsDescription args of
         (oas, n, []) | Just os <- sequence oas -> return $ Right (mconcat os, n)
         (_, _, errs)                           -> return $ Left (concat errs ++ usageInfo usage_header optionsDescription)
@@ -133,11 +135,11 @@ defaultMainWithArgs tests args = do
 defaultMainWithOpts :: [Test] -> RunnerOptions -> IO ()
 defaultMainWithOpts tests ropts = do
     let ropts' = completeRunnerOptions ropts
-    
-    when (unK$ ropt_list_only ropts') $ do 
+
+    when (unK$ ropt_list_only ropts') $ do
       putStr $ listTests tests
       exitSuccess
-    
+
     -- Get a lazy list of the test results, as executed in parallel
     running_tests <- runTests ropts' tests
 
@@ -149,12 +151,12 @@ defaultMainWithOpts tests ropts = do
     -- Show those test results to the user as we get them
     fin_tests <- showRunTestsTop isplain (unK $ ropt_hide_successes ropts') running_tests
     let test_statistics' = gatherStatistics fin_tests
-    
+
     -- Output XML report (if requested)
     case ropt_xml_output ropts' of
         K (Just file) -> XML.produceReport (unK (ropt_xml_nested ropts')) test_statistics' fin_tests >>= writeFile file
         _ -> return ()
-    
+
     -- Set the error code depending on whether the tests succeded or not
     exitWith $ if ts_no_failures test_statistics'
                then ExitSuccess
@@ -163,9 +165,9 @@ defaultMainWithOpts tests ropts = do
 -- | Print out a list of available tests.
 listTests :: [Test] -> String
 listTests tests = "\ntest-framework: All available tests:\n"++
-                  "====================================\n"++ 
+                  "====================================\n"++
                   concat (map (++"\n") (concatMap (showTest "") tests))
-  where 
+  where
     showTest :: String -> Test -> [String]
     showTest path (Test name _testlike)    = ["  "++path ++ name]
     showTest path (TestGroup name tests)   = concatMap (showTest (path++":"++name)) tests
