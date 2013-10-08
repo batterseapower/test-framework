@@ -1,6 +1,6 @@
 Name:                test-framework
 Version:             0.8.0.1
-Cabal-Version:       >= 1.2.3
+Cabal-Version:       >= 1.6
 Category:            Testing
 Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
 Description:         Allows tests such as QuickCheck properties and HUnit test cases to be assembled into test groups, run in
@@ -9,8 +9,9 @@ Description:         Allows tests such as QuickCheck properties and HUnit test c
 License:             BSD3
 License-File:        LICENSE
 Author:              Max Bolingbroke <batterseapower@hotmail.com>
-Maintainer:          Max Bolingbroke <batterseapower@hotmail.com>
-Homepage:            http://batterseapower.github.com/test-framework/
+Maintainer:          Libraries List <libraries@haskell.org>
+Homepage:            https://batterseapower.github.io/test-framework/
+Bug-Reports:         https://github.com/haskell/test-framework/issues/
 Build-Type:          Simple
 
 Flag Tests
@@ -96,3 +97,7 @@ Executable test-framework-tests
 
                 if impl(ghc)
                         Cpp-Options:            -DCOMPILER_GHC
+
+Source-Repository head
+  Type:     git
+  Location: https://github.com/bos/text
