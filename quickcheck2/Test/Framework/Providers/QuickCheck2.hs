@@ -73,7 +73,7 @@ runProperty topts testable = do
         args = stdArgs { replay = Just (gen, 0) -- NB: the 0 is the saved size. Defaults to 0 if you supply "Nothing" for "replay".
                        , maxSuccess = max_success
 #if MIN_VERSION_QuickCheck(2,5,0)
-                       , maxDiscardRatio = max_discard `div` max_success
+                       , maxDiscardRatio = (max_discard `div` max_success) + 1
 #else
                        , maxDiscard = max_discard
 #endif
