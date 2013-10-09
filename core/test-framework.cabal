@@ -1,5 +1,5 @@
 Name:                test-framework
-Version:             0.8.0.1
+Version:             0.8.0.2
 Cabal-Version:       >= 1.6
 Category:            Testing
 Synopsis:            Framework for running and organising tests, with HUnit and QuickCheck support
@@ -100,4 +100,4 @@ Executable test-framework-tests
 
 Source-Repository head
   Type:     git
-  Location: https://github.com/bos/text
+  Location: https://github.com/haskell/test-framework
