@@ -1,14 +1,16 @@
 Name:                test-framework-quickcheck2
-Version:             0.3.0.1
-Cabal-Version:       >= 1.2.3
+Version:             0.3.0.2
+Cabal-Version:       >= 1.6
 Category:            Testing
 Synopsis:            QuickCheck2 support for the test-framework package.
 License:             BSD3
 License-File:        LICENSE
 Author:              Max Bolingbroke <batterseapower@hotmail.com>
-Maintainer:          Max Bolingbroke <batterseapower@hotmail.com>
-Homepage:            http://batterseapower.github.com/test-framework/
+Maintainer:          Haskell Libraries <libraries@haskell.org>
+Homepage:            https://batterseapower.github.io/test-framework/
+Bug-Reports:         https://github.com/haskell/test-framework/
 Build-Type:          Simple
+Description:         QuickCheck2 support for the test-framework package.
 
 Flag Base4
         Description:    Choose base version 4
@@ -36,3 +38,7 @@ Library
                                 CPP
 
         Ghc-Options:            -Wall
+
+Source-Repository head
+  Type:     git
+  Location: https://github.com/haskell/test-framework
